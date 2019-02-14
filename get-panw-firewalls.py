@@ -2,7 +2,7 @@
 
 '''Get Panorama connected firewalls
 
-get-panw-firewalls.py 0.2
+get-panw-firewalls.py 0.0.2
 
 Author: David Cruz (davidcruz72@gmail.com)
 
