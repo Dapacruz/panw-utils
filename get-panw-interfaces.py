@@ -2,7 +2,7 @@
 
 '''Get firewall interfaces
 
-get-panw-interfaces.py 0.2
+get-panw-interfaces.py 0.0.2
 
 Author: David Cruz (davidcruz72@gmail.com)
 
