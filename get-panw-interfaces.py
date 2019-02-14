@@ -57,7 +57,8 @@ def query_api(host):
         with urllib.request.urlopen(url, context=ctx) as response:
             xml = response.read().decode('utf-8')
     except OSError as err:
-        raise SystemExit(f'{host}: Unable to connect to host ({err})')
+        sys.stderr.write(f'{host}: Unable to connect to host ({err})')
+        return
 
     return xml
 
@@ -113,6 +114,8 @@ def main(args):
     results = []
     for host in args.firewalls:
         xml = query_api(host)
+        if not xml:
+            continue
 
         if args.raw_output:
             print(xml)
