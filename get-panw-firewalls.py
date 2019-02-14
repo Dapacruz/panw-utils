@@ -2,7 +2,7 @@
 
 '''Get Panorama connected firewalls
 
-get-firewalls.py 0.2
+get-panw-firewalls.py 0.2
 
 Author: David Cruz (davidcruz72@gmail.com)
 
@@ -30,6 +30,7 @@ import signal
 import ssl
 import sys
 import urllib.request
+import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
 
 def sigint_handler(signum, frame):
@@ -86,6 +87,12 @@ def output(results):
 
 def main(args):
     xml = query_api(args.panorama)
+
+    # Pretty print XML
+    if args.raw_output:
+        print(MD.parseString(xml).toprettyxml(indent='  '))
+        sys.exit(0)
+
     try:
         root = ET.fromstring(xml)
     except TypeError as err:
@@ -106,6 +113,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('panorama', type=str, nargs='?', help='Panorama device to query')
     parser.add_argument('-k', '--key', metavar='', type=str, help='API key')
+    parser.add_argument('-r', '--raw-output', action='store_true', help='Raw XML output')
     parser.add_argument('-t', '--terse', action='store_true', help='Output firewall names only')
     parser.add_argument('-U', '--update', action='store_true', help='Update saved settings')
     args = parser.parse_args()
