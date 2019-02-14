@@ -96,7 +96,7 @@ def main(args):
     try:
         root = ET.fromstring(xml)
     except TypeError as err:
-        raise SystemExit(f'Unable to parse API key! ({err})')
+        raise SystemExit(f'Unable to parse XML! ({err})')
 
     firewalls = parse_xml(root)
 

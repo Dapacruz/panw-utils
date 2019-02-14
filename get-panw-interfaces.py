@@ -121,7 +121,7 @@ def main(args):
         try:
             root = ET.fromstring(xml)
         except TypeError as err:
-            raise SystemExit(f'Unable to parse interfaces! ({err})')
+            raise SystemExit(f'Unable to parse XML! ({err})')
 
         interfaces = parse_xml(root, host)
         sorted_interfaces = sorted(interfaces, key=operator.attrgetter('hostname', 'ifname'))
