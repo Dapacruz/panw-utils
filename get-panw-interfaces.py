@@ -2,7 +2,7 @@
 
 '''Get firewall interfaces
 
-get-interfaces.py 0.2
+get-panw-interfaces.py 0.2
 
 Author: David Cruz (davidcruz72@gmail.com)
 
@@ -114,6 +114,10 @@ def main(args):
     for host in args.firewalls:
         xml = query_api(host)
 
+        if args.raw_output:
+            print(xml)
+            sys.exit(0)
+
         try:
             root = ET.fromstring(xml)
         except TypeError as err:
@@ -135,6 +139,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('firewalls', type=str, nargs='*', help='Space separated list of firewalls to query')
     parser.add_argument('-k', '--key', metavar='', type=str, help='API key')
+    parser.add_argument('-r', '--raw-output', action='store_true', help='Raw XML output')
     parser.add_argument('-t', '--terse', action='store_true', help='Output IP addresses only')
     parser.add_argument('-U', '--update', action='store_true', help='Update saved settings')
     parser.add_argument('--if-state', metavar='', choices=['up', 'down'], help='Filter on interface state')
