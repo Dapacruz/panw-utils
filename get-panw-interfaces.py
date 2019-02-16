@@ -39,7 +39,7 @@ import xml.etree.ElementTree as ET
 def sigint_handler(signum, frame):
     sys.exit(1)
 
-def query_api(host):
+def query_api(args, host):
     # Disable certifcate verification
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
@@ -57,7 +57,7 @@ def query_api(host):
         with urllib.request.urlopen(url, context=ctx) as response:
             xml = response.read().decode('utf-8')
     except OSError as err:
-        sys.stderr.write(f'{host}: Unable to connect to host ({err})')
+        sys.stderr.write(f'{host}: Unable to connect to host ({err})\n')
         return
 
     return xml
@@ -81,7 +81,7 @@ def parse_xml(root, host):
         results.append(interface)
     return results
 
-def output(results):
+def output(args, results):
     if args.terse:
         regex = re.compile(r'.*?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*$')
     else:
@@ -110,32 +110,7 @@ def output(results):
 
     return
 
-def main(args):
-    results = []
-    for host in args.firewalls:
-        xml = query_api(host)
-        if not xml:
-            continue
-
-        if args.raw_output:
-            print(xml)
-            sys.exit(0)
-
-        try:
-            root = ET.fromstring(xml)
-        except TypeError as err:
-            raise SystemExit(f'Unable to parse XML! ({err})')
-
-        interfaces = parse_xml(root, host)
-        sorted_interfaces = sorted(interfaces, key=operator.attrgetter('hostname', 'ifname'))
-        results += sorted_interfaces
-
-    output(results)
-
-    sys.exit(0)
-
-
-if __name__ == '__main__':
+def main():
     # Ctrl+C graceful exit
     signal.signal(signal.SIGINT, sigint_handler)
 
@@ -201,4 +176,29 @@ if __name__ == '__main__':
     if not args.firewalls:
         args.firewalls = settings['default_firewall']
 
-    main(args)
+    results = []
+    for host in args.firewalls:
+        xml = query_api(args, host)
+        if not xml:
+            continue
+
+        if args.raw_output:
+            print(xml)
+            sys.exit(0)
+
+        try:
+            root = ET.fromstring(xml)
+        except TypeError as err:
+            raise SystemExit(f'Unable to parse XML! ({err})')
+
+        interfaces = parse_xml(root, host)
+        sorted_interfaces = sorted(interfaces, key=operator.attrgetter('hostname', 'ifname'))
+        results += sorted_interfaces
+
+    output(args, results)
+
+    sys.exit(0)
+
+
+if __name__ == '__main__':
+    main()

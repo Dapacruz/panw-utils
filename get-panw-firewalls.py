@@ -36,7 +36,7 @@ import xml.etree.ElementTree as ET
 def sigint_handler(signum, frame):
     sys.exit(1)
 
-def query_api(host):
+def query_api(args):
     # Disable certifcate verification
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
@@ -48,12 +48,12 @@ def query_api(host):
         'cmd': '<show><devices><connected></connected></devices></show>',
         'key': args.key,
     })
-    url = f'https://{host}/api/?{params}'
+    url = f'https://{args.panorama}/api/?{params}'
     try:
         with urllib.request.urlopen(url, context=ctx) as response:
             xml = response.read().decode('utf-8')
     except OSError as err:
-        raise SystemExit(f'{host}: Unable to connect to host ({err})')
+        raise SystemExit(f'{args.panorama}: Unable to connect to host ({err})')
 
     return xml
 
@@ -71,7 +71,7 @@ def parse_xml(root):
         })
     return results
 
-def output(results):
+def output(args, results):
     # Print header
     if not args.terse:
         print(f'{"Host" :25}\t{"MgmtIP" :15}\t{"Serial" :12}')
@@ -85,28 +85,7 @@ def output(results):
 
     return
 
-def main(args):
-    xml = query_api(args.panorama)
-
-    # Pretty print XML
-    if args.raw_output:
-        print(MD.parseString(xml).toprettyxml(indent='  '))
-        sys.exit(0)
-
-    try:
-        root = ET.fromstring(xml)
-    except TypeError as err:
-        raise SystemExit(f'Unable to parse XML! ({err})')
-
-    firewalls = parse_xml(root)
-
-    sorted_firewalls = dict(sorted(firewalls.items(), key=lambda i: i[0]))
-    output(sorted_firewalls)
-
-    sys.exit(0)
-
-
-if __name__ == '__main__':
+def main():
     # Ctrl+C graceful exit
     signal.signal(signal.SIGINT, sigint_handler)
 
@@ -163,4 +142,25 @@ if __name__ == '__main__':
     if not args.panorama:
         args.panorama = settings['default_panorama']
 
-    main(args)
+    xml = query_api(args)
+
+    # Pretty print XML
+    if args.raw_output:
+        print(MD.parseString(xml).toprettyxml(indent='  '))
+        sys.exit(0)
+
+    try:
+        root = ET.fromstring(xml)
+    except TypeError as err:
+        raise SystemExit(f'Unable to parse XML! ({err})')
+
+    firewalls = parse_xml(root)
+
+    sorted_firewalls = dict(sorted(firewalls.items(), key=lambda i: i[0]))
+    output(args, sorted_firewalls)
+
+    sys.exit(0)
+
+
+if __name__ == '__main__':
+    main()

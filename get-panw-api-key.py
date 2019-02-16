@@ -35,7 +35,7 @@ import xml.etree.ElementTree as ET
 def sigint_handler(signum, frame):
     sys.exit(1)
 
-def query_api(host):
+def query_api(args, host):
     # Disable certifcate verification
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
@@ -56,23 +56,7 @@ def query_api(host):
 
     return xml
 
-def main(args):
-    for host in args.hosts:
-        xml = query_api(host)
-
-        # Parse and print the API key
-        root = ET.fromstring(xml)
-        if args.verbose:
-            print(f'{host + ": " :30}', end='')
-        try:
-            print(root.find(".//key").text)
-        except AttributeError as err:
-            raise SystemExit(f'Unable to parse API key! ({err})')
-
-    sys.exit(0)
-
-
-if __name__ == '__main__':
+def main():
     # Ctrl+C graceful exit
     signal.signal(signal.SIGINT, sigint_handler)
 
@@ -142,4 +126,20 @@ if __name__ == '__main__':
     if not args.password:
         args.password = getpass(f'Password: ')
 
-    main(args)
+    for host in args.hosts:
+        xml = query_api(args, host)
+
+        # Parse and print the API key
+        root = ET.fromstring(xml)
+        if args.verbose:
+            print(f'{host + ": " :30}', end='')
+        try:
+            print(root.find(".//key").text)
+        except AttributeError as err:
+            raise SystemExit(f'Unable to parse API key! ({err})')
+
+    sys.exit(0)
+
+
+if __name__ == '__main__':
+    main()
