@@ -26,12 +26,36 @@ Palo Alto Networks Utilities
 Features
 --------
 
-* TODO
+get-panw-api-key.py
 
-Credits
--------
+* Returns the current API key, suitable for piping to pbcopy (macOS) or clip.exe (Windows)
+* Command line options
+* Platform independent
+* Save default user and firewall
+* Update saved settings
+* Receives pipeline input (stdin)
+* Uses a default firewall if one not provided
+* Prompts for required parameters if none provided
 
-This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
+get-panw-firewalls.py
 
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+* Returns a list of firewalls including management address and serial number
+* Output can be pasted directly into Excel
+* Terse output option for piping to other commands
+* Command line options
+* Platform independent
+* Save API key and default Panorama host
+* Update saved settings
+* Override/supply API key on the command line
+
+get-panw-interfaces.py
+
+* Returns a list of firewalls interfaces
+* Output can be pasted directly into Excel
+* Terse output option for piping to other commands
+* Command line options
+* Platform independent
+* Save API key and default firewall
+* Update saved settings
+* Override/supply API key on the command line
+* Filter on interface properties

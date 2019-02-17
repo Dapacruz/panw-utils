@@ -12,7 +12,7 @@ Required Python packages:
     None
 
 Features:
-    Get a list of firewalls including mgmt. IP address and serial number
+    Returns a list of firewalls including management address and serial number
     Output can be pasted directly into Excel
     Terse output option for piping to other commands
     Command line options
