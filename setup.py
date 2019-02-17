@@ -22,7 +22,7 @@ setup(
     author_email='davidcruz72@gmail.com',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
-        'Intended Audience :: Developers',
+        'Intended Audience :: System Administrators',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3.6',
@@ -40,10 +40,11 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/dapacruz/panw_utils',
-    version='0.0.7',
+    version='0.1.0',
     zip_safe=False,
     entry_points={
         "console_scripts":[
+            'panw-utils=panw_utils.panw_utils:main',
             'get-panw-api-key=panw_utils.get_panw_api_key:main',
             'get-panw-firewalls=panw_utils.get_panw_firewalls:main',
             'get-panw-interfaces=panw_utils.get_panw_interfaces:main',
