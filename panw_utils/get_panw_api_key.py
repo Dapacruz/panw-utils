@@ -2,7 +2,7 @@
 
 '''Get the current API key
 
-get-panw-api-key.py 0.0.2
+get-panw-api-key.py
 
 Author: David Cruz (davidcruz72@gmail.com)
 
