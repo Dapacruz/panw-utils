@@ -12,7 +12,7 @@ Required Python packages:
     None
 
 Features:
-    Displays available commands
+    Returns a list of available commands
 '''
 
 import signal
@@ -35,7 +35,7 @@ def main():
 
     Available commands:
 
-        panw-utils: Displays available commands
+        panw-utils: Returns a list of available commands
 
         get-panw-api-key: Returns the current API key, suitable for piping to pbcopy (macOS) or clip.exe (Windows)
 
