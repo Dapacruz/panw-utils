@@ -3,7 +3,10 @@
 </br>
 </br>
 ## Features
-**get-panw-api-key.py**
+**panw-utils**
+* Returns a list of available commands
+
+**get-panw-api-key**
 * Returns the current API key, suitable for piping to pbcopy (macOS) or clip.exe (Windows)
 * Command line options
 * Platform independent
@@ -13,7 +16,7 @@
 * Uses a default firewall if one not provided
 * Prompts for required parameters if none provided
 
-**get-panw-firewalls.py**
+**get-panw-firewalls**
 * Returns a list of firewalls including management address and serial number
 * Output can be pasted directly into Excel
 * Terse output option for piping to other commands
@@ -23,7 +26,7 @@
 * Update saved settings
 * Override/supply API key on the command line
 
-**get-panw-interfaces.py**
+**get-panw-interfaces**
 * Returns a list of firewalls interfaces
 * Output can be pasted directly into Excel
 * Terse output option for piping to other commands
