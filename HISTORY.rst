@@ -7,7 +7,7 @@ History
 
 * First release on PyPI.
 
-0.1.3 (2019-02-17)
+0.1.4 (2019-02-17)
 -------------------
 
 * Update README.rst.
