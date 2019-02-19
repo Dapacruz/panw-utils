@@ -157,9 +157,8 @@ def main():
     if args.update:
         print('\nUpdating saved settings ...\n')
         settings['key'] = input(f'New API Key [{settings["key"]}]: ') or settings['key']
-        settings['default_firewall'] = input(f'New Default Firewall Host [{settings["default_firewall"][0]}]: ') or settings['default_firewall']
-        if type(settings['default_firewall']) is not list:
-            settings['default_firewall'] = [settings['default_firewall']]
+        settings['default_firewall'] = input(f'New Default Firewall [{settings["default_firewall"][0]}]: ') or settings['default_firewall'][0]
+        settings['default_firewall'] = [settings['default_firewall']]
         with open(settings_path, 'w') as f:
             json.dump(settings, f, sort_keys=True, indent=2)
         print('\nSettings updated!')
