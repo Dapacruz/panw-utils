@@ -19,7 +19,7 @@ History
 
 * Fix bug in saved settings update
 
-0.1.6 (2019-02-17)
+0.1.7 (2019-02-17)
 -------------------
 
 * Configure Travis CI
