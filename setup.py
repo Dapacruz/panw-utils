@@ -39,7 +39,7 @@ setup(
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/dapacruz/panw_utils',
+    url='https://github.com/dapacruz/panw-utils',
     version='0.1.5',
     zip_safe=False,
     entry_points={
