@@ -38,7 +38,7 @@ Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl  -OL https://github.com/dapacruz/panw_utils/tarball/master
+    $ curl  -OL https://github.com/dapacruz/panw-utils/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -47,5 +47,5 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Github repo: https://github.com/dapacruz/panw_utils
-.. _tarball: https://github.com/dapacruz/panw_utils/tarball/master
+.. _Github repo: https://github.com/dapacruz/panw-utils
+.. _tarball: https://github.com/dapacruz/panw-utils/tarball/master
