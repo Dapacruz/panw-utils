@@ -48,6 +48,7 @@ setup(
             'get-panw-api-key=panw_utils.get_panw_api_key:main',
             'get-panw-firewalls=panw_utils.get_panw_firewalls:main',
             'get-panw-interfaces=panw_utils.get_panw_interfaces:main',
+            'get-panw-config-set=panw_utils.get_panw_config_set:main',
         ]
     },
 )
