@@ -81,7 +81,7 @@ def main():
         # Check for the existence of settings and add if missing
         changed = False
         if not 'default_firewall' in settings:
-            settings['default_firewall'] = [input(f'Default Firewall: ')]
+            settings['default_firewall'] = input(f'Default Firewall: ')
             changed = True
         if not 'default_user' in settings:
             settings['default_user'] = input(f'Default User: ')
@@ -91,7 +91,7 @@ def main():
                 json.dump(settings, f, sort_keys=True, indent=2)
     else:
         settings = {
-            'default_firewall': [input('Default Firewall: ')],
+            'default_firewall': input('Default Firewall: '),
             'default_user': input('Default User: '),
         }
         with open(settings_path, 'w') as f:
@@ -101,8 +101,7 @@ def main():
     # Update saved settings
     if args.update:
         print('\nUpdating saved settings ...\n')
-        settings['default_firewall'] = input(f'New Default Firewall [{settings["default_firewall"][0]}]: ') or settings['default_firewall'][0]
-        settings['default_firewall'] = [settings['default_firewall']]
+        settings['default_firewall'] = input(f'New Default Firewall [{settings["default_firewall"]}]: ') or settings['default_firewall']
         settings['default_user'] = input(f'New Default User [{settings["default_user"]}]: ') or settings['default_user']
         with open(settings_path, 'w') as f:
             json.dump(settings, f, sort_keys=True, indent=2)
@@ -118,7 +117,7 @@ def main():
         # Remove empty strings (Windows PowerShell Select-String cmdlet issue)
         args.hosts = list(filter(None, args.hosts))
     elif not args.hosts:
-        args.hosts = settings['default_firewall']
+        args.hosts = [settings['default_firewall']]
 
     if not args.user:
         args.user = input(f'User [{settings["default_user"]}]: ') or settings['default_user']
