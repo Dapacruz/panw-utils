@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-'''Get firewall configuration in set format
+'''Get firewall set configuration
 
 get_panw_config_set.py
 
@@ -12,7 +12,7 @@ Required Python packages:
     None
 
 Features:
-    Returns the firewall configuration in set format
+    Returns the firewall set configuration
     Command line options
     Platform independent
     Save key based auth preference, default SSH user and default firewall
@@ -107,8 +107,8 @@ def main():
     }
     if not panos.get('username'):
         panos['username'] = settings['default_user']
-    if not args.key_based_auth and not settings['key_based_auth']:
-        panos['password'] = getpass()
+    if not args.key_based_auth:
+        panos['password'] = getpass(f"Password ({panos['username']}): ")
     else:
         panos['use_keys'] = True
         

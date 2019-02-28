@@ -43,7 +43,7 @@ def main():
 
         get-panw-interfaces: Returns a list of firewall interfaces
 
-        get-panw-config: Returns the firewall configuration
+        get-panw-config-set: Returns the firewall set configuration
     '''
     print(commands)
 
