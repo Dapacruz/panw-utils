@@ -42,6 +42,8 @@ def main():
         get-panw-firewalls: Returns a list of firewalls including management address and serial number
 
         get-panw-interfaces: Returns a list of firewall interfaces
+
+        get-panw-config: Returns the firewall configuration
     '''
     print(commands)
 
