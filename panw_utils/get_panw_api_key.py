@@ -120,10 +120,10 @@ def main():
         args.hosts = [settings['default_firewall']]
 
     if not args.user:
-        args.user = input(f'User [{settings["default_user"]}]: ') or settings['default_user']
+        args.user = settings['default_user']
 
     if not args.password:
-        args.password = getpass(f'Password: ')
+        args.password = getpass(f'Password ({args.user}): ')
 
     for host in args.hosts:
         xml = query_api(args, host)
