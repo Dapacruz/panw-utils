@@ -23,3 +23,8 @@ History
 -------------------
 
 * Configure Travis CI
+
+0.2.0 (2019-03-07)
+-------------------
+
+* Added get-panw-config
