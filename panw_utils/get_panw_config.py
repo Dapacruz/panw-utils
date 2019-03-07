@@ -153,6 +153,8 @@ def main():
         args.firewalls = [settings['default_firewall']]
     if not args.user:
         args.user = settings['default_user']
+    if not args.key_based_auth and not args.password:
+        args.password = getpass(f"Password ({args.user}): ")
 
     for host in args.firewalls:
         # Print header
@@ -174,9 +176,8 @@ def main():
             }
             if not args.user:
                 panos['username'] = settings['default_user']
-            if not args.key_based_auth and not panos.get('password'):
-                panos['password'] = getpass(f"Password ({panos['username']}): ")
-            else:
+            
+            if args.key_based_auth:
                 panos['use_keys'] = True
             try:
                 net_connect = ConnectHandler(**panos)
