@@ -36,6 +36,14 @@
 * Update saved settings
 * Override/supply API key on the command line
 * Filter on interface properties
+
+**get-panw-config**
+* Returns the firewall configuration
+* Command line options
+* Platform independent
+* Save key based auth preference, default user and default firewall
+* Update saved settings
+</br>
 </br>
 
 ## Installation
