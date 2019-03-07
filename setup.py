@@ -11,7 +11,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = [ ]
+requirements = ['cryptography==2.4.2', 'netmiko']
 
 setup_requirements = [ ]
 
@@ -35,7 +35,7 @@ setup(
     include_package_data=True,
     keywords='panw_utils',
     name='panw_utils',
-    packages=find_packages(include=['panw_utils', 'netmiko']),
+    packages=find_packages(include=['panw_utils']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
