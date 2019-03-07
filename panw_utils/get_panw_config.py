@@ -133,8 +133,10 @@ def main():
 
     if os.environ.get('USERPROFILE'):
         settings_path = os.path.join(os.environ.get('USERPROFILE'), '.panw-settings.json')
+        key_path = os.path.join(os.environ.get('USERPROFILE'), '.ssh', 'id_rsa')
     else:
         settings_path = os.path.join(os.environ.get('HOME'), '.panw-settings.json')
+        key_path = os.path.join(os.environ.get('HOME'), '.ssh', 'id_rsa')
     settings = import_saved_settings(settings_path)
 
     if args.update:
@@ -178,6 +180,7 @@ def main():
                 panos['username'] = settings['default_user']
             
             if args.key_based_auth:
+                panos['key_file'] = key_path
                 panos['use_keys'] = True
             try:
                 net_connect = ConnectHandler(**panos)
