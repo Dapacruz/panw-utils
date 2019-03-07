@@ -35,7 +35,7 @@ setup(
     include_package_data=True,
     keywords='panw_utils',
     name='panw_utils',
-    packages=find_packages(include=['panw_utils']),
+    packages=find_packages(include=['panw_utils', 'netmiko']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
@@ -48,6 +48,7 @@ setup(
             'get-panw-api-key=panw_utils.get_panw_api_key:main',
             'get-panw-firewalls=panw_utils.get_panw_firewalls:main',
             'get-panw-interfaces=panw_utils.get_panw_interfaces:main',
+            'get-panw-config=panw_utils.get_panw_config:main',
         ]
     },
 )
