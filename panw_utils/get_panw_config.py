@@ -42,20 +42,24 @@ def sigint_handler(signum, frame):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('firewalls', type=str, nargs='*', help='Space separated list of firewalls to query')
-    parser.add_argument('-u', '--user', metavar='', type=str, help='User')
-    parser.add_argument('-p', '--password', metavar='', type=str, help='Password')
-    parser.add_argument('-K', '--key-based-auth', action='store_true', help='Use key based authentication')
-    parser.add_argument('-k', '--key', metavar='', type=str, help='API key')
-    parser.add_argument('-f', '--format', choices=['xml', 'set'], default='xml', help='Output format')
     parser.add_argument('-U', '--update', action='store_true', help='Update saved settings')
-    parser.add_argument('-x', '--xpath', metavar='', type=str, help='XML XPath')
-    parser.add_argument('-t', '--type', choices=['running',
-                                                 'candidate',
-                                                 'pushed-template',
-                                                 'pushed-shared-policy',
-                                                 'merged',
-                                                 'synced',
-                                                 'synced-diff'], default='running', help='Config type')
+    parser.add_argument('-f', '--format', choices=['xml', 'set'], default='xml', help='Output format')
+
+    group1 = parser.add_argument_group('Set', 'Set configuration format')
+    group1.add_argument('-u', '--user', metavar='', type=str, help='User')
+    group1.add_argument('-p', '--password', metavar='', type=str, help='Password')
+    group1.add_argument('-K', '--key-based-auth', action='store_true', help='Use key based authentication')
+    
+    group2 = parser.add_argument_group('XML', 'XML configuration format')
+    group2.add_argument('-k', '--key', metavar='', type=str, help='API key')
+    group2.add_argument('-x', '--xpath', metavar='', type=str, help='XML XPath')
+    group2.add_argument('-t', choices=['running',
+                                       'candidate',
+                                       'pushed-template',
+                                       'pushed-shared-policy',
+                                       'merged',
+                                       'synced',
+                                       'synced-diff'], default='running', help='Config type')
     return parser.parse_args()
 
 
@@ -118,7 +122,7 @@ def query_api(args, host):
     else:
         params = urllib.parse.urlencode({
         'type': 'op',
-        'cmd': f'<show><config><{args.type}></{args.type}></config></show>',
+        'cmd': f'<show><config><{args.t}></{args.t}></config></show>',
         'key': args.key,
     })
     url = f'https://{host}/api/?{params}'
