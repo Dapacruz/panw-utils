@@ -80,8 +80,8 @@ def parse_xml(root):
 def output(args, results):
     # Print header
     if not args.terse:
-        print(f'{"Host" :30}\t{"MgmtIP" :15}\t{"Serial" :12}\t{"Model" :8}\t{"Uptime" :20}\t{"SwVersion" :9}')
-        print(f'{"=" * 30 :30}\t{"=" * 15 :15}\t{"=" * 12 :12}\t{"=" * 8 :8}\t{"=" * 20 :20}\t{"=" * 9 :9}')
+        print(f'{"Host" :30}\t{"MgmtIP" :15}\t{"Serial" :12}\t{"Model" :8}\t{"Uptime" :20}\t{"SwVersion" :9}', file=sys.stderr)
+        print(f'{"=" * 30 :30}\t{"=" * 15 :15}\t{"=" * 12 :12}\t{"=" * 8 :8}\t{"=" * 20 :20}\t{"=" * 9 :9}', file=sys.stderr)
 
     for host, attrib in results.items():
         if args.terse:

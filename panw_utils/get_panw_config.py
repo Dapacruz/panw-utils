@@ -171,9 +171,9 @@ def main():
 
     for host in args.firewalls:
         # Print header
-        print(f'{"=" * (len(host) + 4)}')
-        print(f'= {host} =')
-        print(f'{"=" * (len(host) + 4)}')
+        print(f'{"=" * (len(host) + 4)}', file=sys.stderr)
+        print(f'= {host} =', file=sys.stderr)
+        print(f'{"=" * (len(host) + 4)}', file=sys.stderr)
 
         if args.format == 'xml':
             xml = query_api(args, host)
