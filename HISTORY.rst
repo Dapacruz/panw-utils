@@ -28,3 +28,10 @@ History
 -------------------
 
 * Added get-panw-config
+
+0.3.0 (2019-04-07)
+-------------------
+
+* Implement concurrency
+* Redirect headers to sys.stderr to make grep friendly
+* Add model, uptime and  software version to output
