@@ -63,10 +63,16 @@ def parse_xml(root):
         hostname = f'{firewall.find("hostname").text.lower()}.wsgc.com'
         serial = firewall.find('serial').text
         mgmt_ip = firewall.find('ip-address').text
+        model = firewall.find('model').text
+        uptime = firewall.find('uptime').text
+        sw_version = firewall.find('sw-version').text
         results.update({
             hostname: {
                 'serial': serial,
                 'mgmt_ip': mgmt_ip,
+                'model': model,
+                'uptime': uptime,
+                'sw_version': sw_version,
             }
         })
     return results
@@ -74,14 +80,14 @@ def parse_xml(root):
 def output(args, results):
     # Print header
     if not args.terse:
-        print(f'{"Host" :25}\t{"MgmtIP" :15}\t{"Serial" :12}')
-        print(f'{"=" * 25 :25}\t{"=" * 15 :15}\t{"=" * 12 :12}')
+        print(f'{"Host" :30}\t{"MgmtIP" :15}\t{"Serial" :12}\t{"Model" :8}\t{"Uptime" :20}\t{"SwVersion" :9}')
+        print(f'{"=" * 30 :30}\t{"=" * 15 :15}\t{"=" * 12 :12}\t{"=" * 8 :8}\t{"=" * 20 :20}\t{"=" * 9 :9}')
 
     for host, attrib in results.items():
         if args.terse:
             print(host)
         else:
-            print(f'{host :25}\t{attrib["mgmt_ip"] :15}\t{attrib["serial"] :12}')
+            print(f'{host :30}\t{attrib["mgmt_ip"] :15}\t{attrib["serial"] :12}\t{attrib["model"] :8}\t{attrib["uptime"] :20}\t{attrib["sw_version"] :9}')
 
     return
 
