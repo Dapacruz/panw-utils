@@ -21,6 +21,7 @@ Features:
     Update saved settings
     Override/supply API key on the command line
     Filter on interface properties
+    Multi-processing
 '''
 
 import argparse

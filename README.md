@@ -15,6 +15,7 @@
 * Receives pipeline input (stdin)
 * Uses a default firewall if one not provided
 * Prompts for required parameters if none provided
+* Multi-processing
 
 **get-panw-firewalls**
 * Returns a list of firewalls including management address and serial number
@@ -36,6 +37,7 @@
 * Update saved settings
 * Override/supply API key on the command line
 * Filter on interface properties
+* Multi-processing
 
 **get-panw-config**
 * Returns the firewall configuration
@@ -43,6 +45,7 @@
 * Platform independent
 * Save key based auth preference, default user and default firewall
 * Update saved settings
+* Multi-processing
 </br>
 </br>
 

@@ -12,11 +12,12 @@ Required Python packages:
     None
 
 Features:
-    Returns the firewall configuration
+    Returns the firewall configuration (set/XML format)
     Command line options
     Platform independent
     Save key based auth preference, default user and default firewall
     Update saved settings
+    Multi-processing
 '''
 
 import argparse
@@ -209,9 +210,9 @@ def main():
     if args.format == 'xml':
         for xml, host in pool.imap_unordered(partial(query_api, args), args.firewalls):
             # Print header
-            print(f'{"=" * (len(host) + 4)}', file=sys.stderr)
-            print(f'= {host} =', file=sys.stderr)
-            print(f'{"=" * (len(host) + 4)}', file=sys.stderr)
+            print(f'{"=" * (len(host) + 4)}')
+            print(f'= {host} =')
+            print(f'{"=" * (len(host) + 4)}')
             if not xml:
                 continue
             print(xml)
@@ -219,9 +220,9 @@ def main():
         print(f'Collecting set configuration via ssh ...', file=sys.stderr)
         for output, host in pool.imap_unordered(partial(connect_ssh, args, settings, key_path), args.firewalls):
             # Print header
-            print(f'{"=" * (len(host) + 4)}', file=sys.stderr)
-            print(f'= {host} =', file=sys.stderr)
-            print(f'{"=" * (len(host) + 4)}', file=sys.stderr)
+            print(f'{"=" * (len(host) + 4)}')
+            print(f'= {host} =')
+            print(f'{"=" * (len(host) + 4)}')
             print(output)
             print('\n', file=sys.stderr)
 
