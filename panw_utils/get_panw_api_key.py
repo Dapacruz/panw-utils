@@ -20,6 +20,7 @@ Features:
     Receives pipeline input (stdin)
     Uses a default firewall if one not provided
     Prompts for required parameters if none provided
+    Multi-processing
 '''
 
 import argparse
