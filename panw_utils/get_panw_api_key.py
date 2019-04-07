@@ -23,8 +23,10 @@ Features:
 '''
 
 import argparse
+from functools import partial
 from getpass import getpass
 import json
+from multiprocessing.pool import ThreadPool as Pool
 import os
 import signal
 import ssl
@@ -54,7 +56,7 @@ def query_api(args, host):
     except OSError as err:
         raise SystemExit(f'{host}: Unable to connect to host ({err})')
 
-    return xml
+    return xml, host
 
 def main():
     # Ctrl+C graceful exit
@@ -125,9 +127,8 @@ def main():
     if not args.password:
         args.password = getpass(f'Password ({args.user}): ')
 
-    for host in args.hosts:
-        xml = query_api(args, host)
-
+    pool = Pool(25)
+    for xml, host in pool.imap_unordered(partial(query_api, args), args.hosts):
         # Parse and print the API key
         root = ET.fromstring(xml)
         if args.verbose:
@@ -136,7 +137,7 @@ def main():
             print(root.find(".//key").text)
         except AttributeError as err:
             raise SystemExit(f'Unable to parse API key! ({err})')
-
+        
     sys.exit(0)
 
 

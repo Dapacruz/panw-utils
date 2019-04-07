@@ -24,8 +24,10 @@ Features:
 '''
 
 import argparse
+from functools import partial
 import json
 from collections import namedtuple
+from multiprocessing.pool import ThreadPool as Pool
 import operator
 import os
 import os.path
@@ -60,7 +62,7 @@ def query_api(args, host):
         sys.stderr.write(f'{host}: Unable to connect to host ({err})\n')
         return
 
-    return xml
+    return xml, host
 
 def parse_xml(root, host):
     hostname = host
@@ -177,8 +179,8 @@ def main():
         args.firewalls = settings['default_firewall']
 
     results = []
-    for host in args.firewalls:
-        xml = query_api(args, host)
+    pool = Pool(25)
+    for xml, host in pool.imap_unordered(partial(query_api, args), args.firewalls):
         if not xml:
             continue
 
