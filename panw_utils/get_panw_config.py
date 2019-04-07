@@ -20,13 +20,15 @@ Features:
 '''
 
 import argparse
+from functools import partial
 from getpass import getpass
 import json
 from collections import namedtuple
+from multiprocessing.pool import ThreadPool as Pool
+from netmiko import ConnectHandler
 import operator
 import os
 import os.path
-from netmiko import ConnectHandler
 import re
 import signal
 import ssl
@@ -49,7 +51,7 @@ def parse_args():
     group1.add_argument('-u', '--user', metavar='', type=str, help='User')
     group1.add_argument('-p', '--password', metavar='', type=str, help='Password')
     group1.add_argument('-K', '--key-based-auth', action='store_true', help='Use key based authentication')
-    
+
     group2 = parser.add_argument_group('XML', 'XML configuration format')
     group2.add_argument('-k', '--key', metavar='', type=str, help='API key')
     group2.add_argument('-x', '--xpath', metavar='', type=str, help='XML XPath')
@@ -133,7 +135,41 @@ def query_api(args, host):
         sys.stderr.write(f'{host}: Unable to connect to host ({err})\n')
         return
 
-    return xml
+    return xml, host
+
+
+def connect_ssh(args, settings, key_path, host):
+    panos = {
+        'host': host,
+        'device_type': 'paloalto_panos',
+        'username': args.user,
+        'password': args.password,
+    }
+
+    if not args.user:
+        panos['username'] = settings['default_user']
+
+    if args.key_based_auth:
+        panos['key_file'] = key_path
+        panos['use_keys'] = True
+
+    try:
+        net_connect = ConnectHandler(**panos)
+        output = net_connect.send_command('set cli config-output-format set')
+        output = net_connect.send_config_set(['show'])
+    except Exception as e:
+        sys.stderr.write(f'Connection error: {e}')
+        sys.exit(1)
+    finally:
+        net_connect.disconnect()
+
+    # Remove extraneous leading/trailing output
+    output = '\n'.join(output.split('\n')[4:-4])
+
+    # # Remove blank lines
+    # output = list(filter(None, output))
+
+    return output, host
 
 
 def main():
@@ -169,42 +205,23 @@ def main():
     if not args.key_based_auth and not args.password:
         args.password = getpass(f"Password ({args.user}): ")
 
-    for host in args.firewalls:
-        # Print header
-        print(f'{"=" * (len(host) + 4)}', file=sys.stderr)
-        print(f'= {host} =', file=sys.stderr)
-        print(f'{"=" * (len(host) + 4)}', file=sys.stderr)
-
-        if args.format == 'xml':
-            xml = query_api(args, host)
+    pool = Pool(25)
+    if args.format == 'xml':
+        for xml, host in pool.imap_unordered(partial(query_api, args), args.firewalls):
+            # Print header
+            print(f'{"=" * (len(host) + 4)}', file=sys.stderr)
+            print(f'= {host} =', file=sys.stderr)
+            print(f'{"=" * (len(host) + 4)}', file=sys.stderr)
             if not xml:
                 continue
             print(xml)
-        elif args.format == 'set':
-            panos = {
-                'host': host,
-                'device_type': 'paloalto_panos',
-                'username': args.user,
-                'password': args.password,
-            }
-            if not args.user:
-                panos['username'] = settings['default_user']
-            
-            if args.key_based_auth:
-                panos['key_file'] = key_path
-                panos['use_keys'] = True
-            try:
-                net_connect = ConnectHandler(**panos)
-                output = net_connect.send_command('set cli config-output-format set')
-                output = net_connect.send_config_set(['show'])
-            except Exception as e:
-                sys.stderr.write(f'Connection error: {e}')
-                sys.exit(1)
-            finally:
-                net_connect.disconnect()
-
-            # Remove extraneous leading/trailing output
-            output = '\n'.join(output.split('\n')[4:-4])
+    elif args.format == 'set':
+        print(f'Collecting set configuration via ssh ...', file=sys.stderr)
+        for output, host in pool.imap_unordered(partial(connect_ssh, args, settings, key_path), args.firewalls):
+            # Print header
+            print(f'{"=" * (len(host) + 4)}', file=sys.stderr)
+            print(f'= {host} =', file=sys.stderr)
+            print(f'{"=" * (len(host) + 4)}', file=sys.stderr)
             print(output)
             print('\n', file=sys.stderr)
 
