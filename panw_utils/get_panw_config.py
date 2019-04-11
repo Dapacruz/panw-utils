@@ -203,7 +203,7 @@ def main():
         args.firewalls = [settings['default_firewall']]
     if not args.user:
         args.user = settings['default_user']
-    if not args.key_based_auth and not args.password:
+    if args.format == 'set' and not args.key_based_auth and not args.password:
         args.password = getpass(f"Password ({args.user}): ")
 
     pool = Pool(25)
