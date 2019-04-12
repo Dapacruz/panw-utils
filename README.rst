@@ -26,11 +26,11 @@ Palo Alto Networks Utilities
 Features
 --------
 
-panw-utils
+**panw-utils**
 
 * Returns a list of available commands
 
-get-panw-api-key
+**get-panw-api-key**
 
 * Returns the current API key, suitable for piping to pbcopy (macOS) or clip.exe (Windows)
 * Command line options
@@ -42,7 +42,7 @@ get-panw-api-key
 * Prompts for required parameters if none provided
 * Multi-threaded
 
-get-panw-firewalls
+**get-panw-firewalls**
 
 * Returns a list of firewalls including management address and serial number
 * Output can be pasted directly into Excel
@@ -53,7 +53,7 @@ get-panw-firewalls
 * Update saved settings
 * Override/supply API key on the command line
 
-get-panw-interfaces
+**get-panw-interfaces**
 
 * Returns a list of firewalls interfaces
 * Output can be pasted directly into Excel
@@ -66,7 +66,7 @@ get-panw-interfaces
 * Filter on interface properties
 * Multi-threaded
 
-get-panw-config
+**get-panw-config**
 
 * Returns the firewall configuration (set/XML format)
 * Command line options
