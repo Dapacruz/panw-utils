@@ -266,3 +266,37 @@ To return the set configuration of multiple firewalls pipe the output of ``get-p
     set network virtual-router default routing-table ip static-route "Default Route" metric 10
     set network virtual-router default routing-table ip static-route "Default Route" destination 0.0.0.0/0
     set network virtual-router default routing-table ip static-route "Default Route" route-table unicast
+
+To ping all interfaces in an "up" state with a 1 second timeout, count 1, filter HA subnets::
+
+    $ get-panw-firewalls -t | grep fw01.domain.com | get-panw-interfaces --if-state up -t | grep -v 1.1.1. | xargs -n1 ping -c 1 -t 1
+    PING 10.170.196.241 (10.170.196.241): 56 data bytes
+    64 bytes from 10.170.196.241: icmp_seq=0 ttl=57 time=63.845 ms
+
+    --- 10.170.196.241 ping statistics ---
+    1 packets transmitted, 1 packets received, 0.0% packet loss
+    round-trip min/avg/max/stddev = 63.845/63.845/63.845/0.000 ms
+    PING 10.170.118.254 (10.170.118.254): 56 data bytes
+    64 bytes from 10.170.118.254: icmp_seq=0 ttl=57 time=63.471 ms
+
+    --- 10.170.118.254 ping statistics ---
+    1 packets transmitted, 1 packets received, 0.0% packet loss
+    round-trip min/avg/max/stddev = 63.471/63.471/63.471/0.000 ms
+    PING 10.171.119.254 (10.171.119.254): 56 data bytes
+    64 bytes from 10.171.119.254: icmp_seq=0 ttl=57 time=63.862 ms
+
+    --- 10.171.119.254 ping statistics ---
+    1 packets transmitted, 1 packets received, 0.0% packet loss
+    round-trip min/avg/max/stddev = 63.862/63.862/63.862/0.000 ms
+    PING 10.170.111.254 (10.170.111.254): 56 data bytes
+    64 bytes from 10.170.111.254: icmp_seq=0 ttl=57 time=63.931 ms
+
+    --- 10.170.111.254 ping statistics ---
+    1 packets transmitted, 1 packets received, 0.0% packet loss
+    round-trip min/avg/max/stddev = 63.931/63.931/63.931/0.000 ms
+    PING 10.170.92.126 (10.170.92.126): 56 data bytes
+    64 bytes from 10.170.92.126: icmp_seq=0 ttl=57 time=63.768 ms
+
+    --- 10.170.92.126 ping statistics ---
+    1 packets transmitted, 1 packets received, 0.0% packet loss
+    round-trip min/avg/max/stddev = 63.768/63.768/63.768/0.000 ms
