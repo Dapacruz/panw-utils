@@ -21,23 +21,29 @@ Features:
     Update saved settings
     Override/supply API key on the command line
     Filter on interface properties
-    Multi-processing
+    Multi-threaded
 '''
 
 import argparse
-from functools import partial
 import json
 from collections import namedtuple
-from multiprocessing.pool import ThreadPool as Pool
 import operator
 import os
 import os.path
+import queue
 import re
 import signal
 import ssl
 import sys
+import threading
 import urllib.request
 import xml.etree.ElementTree as ET
+
+results = []
+
+print_queue = queue.Queue()
+results_queue = queue.Queue()
+
 
 def sigint_handler(signum, frame):
     sys.exit(1)
@@ -63,7 +69,7 @@ def query_api(args, host):
         sys.stderr.write(f'{host}: Unable to connect to host ({err})\n')
         return
 
-    return xml, host
+    return xml
 
 def parse_xml(root, host):
     hostname = host
@@ -84,14 +90,13 @@ def parse_xml(root, host):
         results.append(interface)
     return results
 
-def output(args, results):
+def print_results(args, results):
     if args.terse:
         regex = re.compile(r'.*?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*$')
-    else:
-        print('\n')
 
     # Print header
     if not args.terse:
+        print('\n')
         print(f'{"Firewall" :25}\t{"Interface" :20}\t{"State" :5}\t{"IpAddress" :20}', file=sys.stderr)
         print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 5 :5}\t{"=" * 20 :20}', file=sys.stderr)
 
@@ -111,7 +116,40 @@ def output(args, results):
             elif not args.if_state:
                 print(f'{hostname :25}\t{ifname :20}\t{state :5}\t{ip :20}')
 
-    return
+
+def worker(args, host):
+    xml = query_api(args, host)
+
+    if args.raw_output:
+        print_queue.put(xml)
+        return
+
+    try:
+        root = ET.fromstring(xml)
+    except TypeError as err:
+        raise SystemExit(f'Unable to parse XML! ({err})')
+
+    interfaces = parse_xml(root, host)
+    sorted_interfaces = sorted(interfaces, key=operator.attrgetter('hostname', 'ifname'))
+    results_queue.put(sorted_interfaces)
+
+
+def print_manager():
+    while True:
+        job = print_queue.get()
+        for line in job:
+            print(line)
+        print_queue.task_done()
+
+
+def results_manager():
+    global results
+
+    while True:
+        result = results_queue.get()
+        results += result
+        results_queue.task_done()
+
 
 def main():
     # Ctrl+C graceful exit
@@ -179,26 +217,31 @@ def main():
     if not args.firewalls:
         args.firewalls = settings['default_firewall']
 
-    results = []
-    pool = Pool(25)
-    for xml, host in pool.imap_unordered(partial(query_api, args), args.firewalls):
-        if not xml:
-            continue
+    # Start print manager
+    t = threading.Thread(target=print_manager)
+    t.daemon = True
+    t.start()
+    del t
 
-        if args.raw_output:
-            print(xml)
-            sys.exit(0)
+    # Results manager
+    t = threading.Thread(target=results_manager)
+    t.daemon = True
+    t.start()
+    del t
 
-        try:
-            root = ET.fromstring(xml)
-        except TypeError as err:
-            raise SystemExit(f'Unable to parse XML! ({err})')
+    worker_threads = []
+    for host in args.firewalls:
+        t = threading.Thread(target=worker, args=(args, host))
+        worker_threads.append(t)
+        t.start()
+    
+    for t in worker_threads:
+        t.join()
 
-        interfaces = parse_xml(root, host)
-        sorted_interfaces = sorted(interfaces, key=operator.attrgetter('hostname', 'ifname'))
-        results += sorted_interfaces
+    print_results(args, results)
 
-    output(args, results)
+    results_queue.join()
+    print_queue.join()
 
     sys.exit(0)
 

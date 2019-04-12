@@ -20,20 +20,23 @@ Features:
     Receives pipeline input (stdin)
     Uses a default firewall if one not provided
     Prompts for required parameters if none provided
-    Multi-processing
+    Multi-threaded
 '''
 
 import argparse
-from functools import partial
 from getpass import getpass
 import json
-from multiprocessing.pool import ThreadPool as Pool
 import os
+import queue
 import signal
 import ssl
 import sys
+import threading
 import urllib.request
 import xml.etree.ElementTree as ET
+
+print_queue = queue.Queue()
+
 
 def sigint_handler(signum, frame):
     sys.exit(1)
@@ -57,7 +60,29 @@ def query_api(args, host):
     except OSError as err:
         raise SystemExit(f'{host}: Unable to connect to host ({err})')
 
-    return xml, host
+    return xml
+
+
+def worker(args, host):
+    xml = query_api(args, host)
+
+    # Parse and print the API key
+    root = ET.fromstring(xml)
+    if args.verbose:
+        print(f'{host + ": " :30}', end='')
+    try:
+        print(root.find(".//key").text)
+    except AttributeError as err:
+        raise SystemExit(f'Unable to parse API key! ({err})')
+
+
+def print_manager():
+    while True:
+        job = print_queue.get()
+        for line in job:
+            print(line)
+        print_queue.task_done()
+
 
 def main():
     # Ctrl+C graceful exit
@@ -128,17 +153,23 @@ def main():
     if not args.password:
         args.password = getpass(f'Password ({args.user}): ')
 
-    pool = Pool(25)
-    for xml, host in pool.imap_unordered(partial(query_api, args), args.hosts):
-        # Parse and print the API key
-        root = ET.fromstring(xml)
-        if args.verbose:
-            print(f'{host + ": " :30}', end='')
-        try:
-            print(root.find(".//key").text)
-        except AttributeError as err:
-            raise SystemExit(f'Unable to parse API key! ({err})')
-        
+    # Start print manager
+    t = threading.Thread(target=print_manager)
+    t.daemon = True
+    t.start()
+    del t
+
+    worker_threads = []
+    for host in args.hosts:
+        t = threading.Thread(target=worker, args=(args, host))
+        worker_threads.append(t)
+        t.start()
+    
+    for t in worker_threads:
+        t.join()
+
+    print_queue.join()
+    
     sys.exit(0)
 
 

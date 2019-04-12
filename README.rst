@@ -40,7 +40,7 @@ get-panw-api-key
 * Receives pipeline input (stdin)
 * Uses a default firewall if one not provided
 * Prompts for required parameters if none provided
-* Multi-processing
+* Multi-threaded
 
 get-panw-firewalls
 
@@ -64,7 +64,7 @@ get-panw-interfaces
 * Update saved settings
 * Override/supply API key on the command line
 * Filter on interface properties
-* Multi-processing
+* Multi-threaded
 
 get-panw-config
 
@@ -73,7 +73,7 @@ get-panw-config
 * Platform independent
 * Save key based auth preference, default user and default firewall
 * Update saved settings
-* Multi-processing
+* Multi-threaded
 
 
 Usage
