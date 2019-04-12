@@ -87,11 +87,15 @@ To return a list of firewalls use the ``get-panw-firewalls`` command::
     fw01.domain.com                     1.1.1.1  	013999999999	PA-5220 	208 days, 6:49:53   	8.0.9
     fw01.domain.com                     1.1.1.2  	013999999998	PA-5220 	208 days, 7:27:28   	8.0.9
 
+|
+
 To return a list of firewall hostnames use the ``get-panw-firewalls`` command (suitable for piping to other commands)::
 
     $ get-panw-firewalls -t
     fw01.domain.com
     fw01.domain.com
+
+|
 
 To return a list of firewall interfaces use the ``get-panw-interfaces`` command::
 
@@ -131,6 +135,8 @@ To return a list of firewall interfaces use the ``get-panw-interfaces`` command:
     fw02.domain.com      	ethernet1/5         	up   	172.19.222.206/28
     fw02.domain.com      	ethernet1/7         	up   	N/A
 
+|
+
 To return the firewall configuration use the ``get-panw-config`` command::
 
     $ get-panw-config
@@ -157,6 +163,8 @@ To return the firewall configuration use the ``get-panw-config`` command::
             <phash>xxxxx</phash>
           </entry>
     <--- Output truncated --->
+
+|
 
 To return the configuration of multiple firewalls pipe the output of ``get-panw-firewalls -t`` to the ``get-panw-config`` command::
 
@@ -209,6 +217,8 @@ To return the configuration of multiple firewalls pipe the output of ``get-panw-
           </entry>
     <--- Output truncated --->
 
+|
+
 To return a portion of the firewall configuration use the ``get-panw-config`` command with the ``--xpath`` option::
 
     get-panw-config --xpath "/config/mgt-config/users"
@@ -225,6 +235,8 @@ To return a portion of the firewall configuration use the ``get-panw-config`` co
         </permissions>
       </entry>
     </users></result></response>
+
+|
 
 To return the set configuration of multiple firewalls pipe the output of ``get-panw-firewalls -t`` to the ``get-panw-config`` command::
 
@@ -266,6 +278,8 @@ To return the set configuration of multiple firewalls pipe the output of ``get-p
     set network virtual-router default routing-table ip static-route "Default Route" metric 10
     set network virtual-router default routing-table ip static-route "Default Route" destination 0.0.0.0/0
     set network virtual-router default routing-table ip static-route "Default Route" route-table unicast
+
+|
 
 To ping all interfaces in an "up" state with a 1 second timeout, count 1, filter HA subnets::
 
