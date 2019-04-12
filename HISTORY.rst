@@ -35,3 +35,8 @@ History
 * Implement concurrency
 * Redirect headers to sys.stderr to make grep friendly
 * Add model, uptime and  software version to output
+
+0.4.0 (2019-04-12)
+-------------------
+
+* Migrate from multi-processing to multi-threading
