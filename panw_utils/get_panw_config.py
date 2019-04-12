@@ -17,25 +17,27 @@ Features:
     Platform independent
     Save key based auth preference, default user and default firewall
     Update saved settings
-    Multi-processing
+    Multi-threaded
 '''
 
 import argparse
-from functools import partial
 from getpass import getpass
 import json
 from collections import namedtuple
-from multiprocessing.pool import ThreadPool as Pool
 from netmiko import ConnectHandler
 import operator
 import os
 import os.path
+import queue
 import re
 import signal
 import ssl
 import sys
+import threading
 import urllib.request
 import xml.etree.ElementTree as ET
+
+print_queue = queue.Queue()
 
 
 def sigint_handler(signum, frame):
@@ -48,12 +50,13 @@ def parse_args():
     parser.add_argument('-U', '--update', action='store_true', help='Update saved settings')
     parser.add_argument('-f', '--format', choices=['xml', 'set'], default='xml', help='Output format')
 
-    group1 = parser.add_argument_group('Set', 'Set configuration format')
+    group1 = parser.add_argument_group('Set configuration format')
+    group1.add_argument('-g', '--global-delay-factor', metavar='', type=int, default=1, help='Increase wait time for prompt')
     group1.add_argument('-u', '--user', metavar='', type=str, help='User')
     group1.add_argument('-p', '--password', metavar='', type=str, help='Password')
     group1.add_argument('-K', '--key-based-auth', action='store_true', help='Use key based authentication')
 
-    group2 = parser.add_argument_group('XML', 'XML configuration format')
+    group2 = parser.add_argument_group('XML configuration format')
     group2.add_argument('-k', '--key', metavar='', type=str, help='API key')
     group2.add_argument('-x', '--xpath', metavar='', type=str, help='XML XPath')
     group2.add_argument('-t', choices=['running',
@@ -131,13 +134,12 @@ def query_api(args, host):
     url = f'https://{host}/api/?{params}'
     try:
         with urllib.request.urlopen(url, context=ctx) as response:
-            xml = response.read().decode('utf-8')
+            xml_config = response.read().decode('utf-8')
     except OSError as err:
         sys.stderr.write(f'{host}: Unable to connect to host ({err})\n')
         return
 
-    return xml, host
-
+    print_config(xml_config, host)
 
 def connect_ssh(args, settings, key_path, host):
     panos = {
@@ -145,6 +147,7 @@ def connect_ssh(args, settings, key_path, host):
         'device_type': 'paloalto_panos',
         'username': args.user,
         'password': args.password,
+        'global_delay_factor': args.global_delay_factor,
     }
 
     if not args.user:
@@ -156,8 +159,8 @@ def connect_ssh(args, settings, key_path, host):
 
     try:
         net_connect = ConnectHandler(**panos)
-        output = net_connect.send_command('set cli config-output-format set')
-        output = net_connect.send_config_set(['show'])
+        set_config = net_connect.send_command('set cli config-output-format set')
+        set_config = net_connect.send_config_set(['show'])
     except Exception as e:
         sys.stderr.write(f'Connection error: {e}')
         sys.exit(1)
@@ -165,12 +168,27 @@ def connect_ssh(args, settings, key_path, host):
         net_connect.disconnect()
 
     # Remove extraneous leading/trailing output
-    output = '\n'.join(output.split('\n')[4:-4])
+    set_config = '\n'.join(set_config.split('\n')[4:-4])
 
-    # # Remove blank lines
-    # output = list(filter(None, output))
+    print_config(set_config, host)
 
-    return output, host
+
+def print_config(config, host):
+            # Print header
+            print_queue.put([
+                f'{"=" * (len(host) + 4)}',
+                f'= {host} =',
+                f'{"=" * (len(host) + 4)}',
+                config,
+            ])
+
+
+def print_manager():
+    while True:
+        job = print_queue.get()
+        for line in job:
+            print(line)
+        print_queue.task_done()
 
 
 def main():
@@ -206,25 +224,34 @@ def main():
     if args.format == 'set' and not args.key_based_auth and not args.password:
         args.password = getpass(f"Password ({args.user}): ")
 
-    pool = Pool(25)
+    # Start print manager
+    t = threading.Thread(target=print_manager)
+    t.daemon = True
+    t.start()
+    del t
+
+    # Collect, process and print configuration
     if args.format == 'xml':
-        for xml, host in pool.imap_unordered(partial(query_api, args), args.firewalls):
-            # Print header
-            print(f'{"=" * (len(host) + 4)}')
-            print(f'= {host} =')
-            print(f'{"=" * (len(host) + 4)}')
-            if not xml:
-                continue
-            print(xml)
+        worker_threads = []
+        for host in args.firewalls:
+            t = threading.Thread(target=query_api, args=(args, host))
+            worker_threads.append(t)
+            t.start()
+        
+        for t in worker_threads:
+            t.join()
     elif args.format == 'set':
-        print(f'Collecting set configuration via ssh ...', file=sys.stderr)
-        for output, host in pool.imap_unordered(partial(connect_ssh, args, settings, key_path), args.firewalls):
-            # Print header
-            print(f'{"=" * (len(host) + 4)}')
-            print(f'= {host} =')
-            print(f'{"=" * (len(host) + 4)}')
-            print(output)
-            print('\n', file=sys.stderr)
+        print('Connecting to firewalls via SSH ...', file=sys.stderr)
+        worker_threads = []
+        for host in args.firewalls:
+            t = threading.Thread(target=connect_ssh, args=(args, settings, key_path, host))
+            worker_threads.append(t)
+            t.start()
+
+        for t in worker_threads:
+            t.join()
+
+    print_queue.join()
 
     sys.exit(0)
 
