@@ -43,9 +43,13 @@ def query_api(args):
     ctx.verify_mode = ssl.CERT_NONE
 
     # Get connected firewalls
+    if args.state == 'connected':
+        cmd = '<show><devices><connected></connected></devices></show>'
+    else:
+        cmd = '<show><devices><all></all></devices></show>'
     params = urllib.parse.urlencode({
         'type': 'op',
-        'cmd': '<show><devices><connected></connected></devices></show>',
+        'cmd': cmd,
         'key': args.key,
     })
     url = f'https://{args.panorama}/api/?{params}'
@@ -57,37 +61,64 @@ def query_api(args):
 
     return xml
 
-def parse_xml(root):
+def parse_xml(args, root):
     results = {}
     for firewall in root.findall('./result/devices/entry'):
-        hostname = f'{firewall.find("hostname").text.lower()}.wsgc.com'
-        serial = firewall.find('serial').text
-        mgmt_ip = firewall.find('ip-address').text
-        model = firewall.find('model').text
-        uptime = firewall.find('uptime').text
-        sw_version = firewall.find('sw-version').text
+        connected = firewall.find('connected').text
+        if args.state == 'connected' and connected == 'no':
+            continue
+        elif args.state == 'not-connected' and connected == 'yes':
+            continue
+
+        try:
+            hostname = f'{firewall.find("hostname").text.lower()}.wsgc.com'
+        except AttributeError:
+            hostname = 'N/A'
+        try:
+            serial = firewall.find('serial').text
+        except AttributeError:
+            serial = 'N/A'
+        try:
+            mgmt_ip = firewall.find('ip-address').text
+        except AttributeError:
+            mgmt_ip = 'N/A'
+        try:
+            model = firewall.find('model').text
+        except AttributeError:
+            model = 'N/A'
+        try:
+            uptime = firewall.find('uptime').text
+        except AttributeError:
+            uptime = 'N/A'
+        try:
+            sw_version = firewall.find('sw-version').text
+        except AttributeError:
+            sw_version = 'N/A'
+        
         results.update({
             hostname: {
                 'serial': serial,
                 'mgmt_ip': mgmt_ip,
                 'model': model,
+                'connected': connected,
                 'uptime': uptime,
                 'sw_version': sw_version,
             }
         })
+    
     return results
 
 def output(args, results):
     # Print header
     if not args.terse:
-        print(f'{"Host" :30}\t{"MgmtIP" :15}\t{"Serial" :12}\t{"Model" :8}\t{"Uptime" :20}\t{"SwVersion" :9}', file=sys.stderr)
-        print(f'{"=" * 30 :30}\t{"=" * 15 :15}\t{"=" * 12 :12}\t{"=" * 8 :8}\t{"=" * 20 :20}\t{"=" * 9 :9}', file=sys.stderr)
+        print(f'{"Host" :30}\t{"MgmtIP" :15}\t{"Serial" :12}\t{"Model" :8}\t{"Connected" :9}\t{"Uptime" :20}\t{"SwVersion" :9}', file=sys.stderr)
+        print(f'{"=" * 30 :30}\t{"=" * 15 :15}\t{"=" * 12 :12}\t{"=" * 8 :8}\t{"=" * 9 :9}\t{"=" * 20 :20}\t{"=" * 9 :9}', file=sys.stderr)
 
     for host, attrib in results.items():
         if args.terse:
             print(host)
         else:
-            print(f'{host :30}\t{attrib["mgmt_ip"] :15}\t{attrib["serial"] :12}\t{attrib["model"] :8}\t{attrib["uptime"] :20}\t{attrib["sw_version"] :9}')
+            print(f'{host :30}\t{attrib["mgmt_ip"] :15}\t{attrib["serial"] :12}\t{attrib["model"] :8}\t{attrib["connected"] :9}\t{attrib["uptime"] :20}\t{attrib["sw_version"] :9}')
 
     return
 
@@ -99,6 +130,7 @@ def main():
     parser.add_argument('panorama', type=str, nargs='?', help='Panorama device to query')
     parser.add_argument('-k', '--key', metavar='', type=str, help='API key')
     parser.add_argument('-r', '--raw-output', action='store_true', help='Raw XML output')
+    parser.add_argument('-s', '--state', choices=['connected', 'not-connected', 'any'], default='connected', help='Connection state')
     parser.add_argument('-t', '--terse', action='store_true', help='Output firewall names only')
     parser.add_argument('-U', '--update', action='store_true', help='Update saved settings')
     args = parser.parse_args()
@@ -160,7 +192,7 @@ def main():
     except TypeError as err:
         raise SystemExit(f'Unable to parse XML! ({err})')
 
-    firewalls = parse_xml(root)
+    firewalls = parse_xml(args, root)
 
     sorted_firewalls = dict(sorted(firewalls.items(), key=lambda i: i[0]))
     output(args, sorted_firewalls)
