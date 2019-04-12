@@ -85,7 +85,7 @@ To return a list of firewalls use the ``get-panw-firewalls`` command::
     Host                          	MgmtIP         	Serial      	Model   	Uptime              	SwVersion
     ==============================	===============	============	========	====================	=========
     fw01.domain.com                     1.1.1.1  	013999999999	PA-5220 	208 days, 6:49:53   	8.0.9
-    fw01.domain.com                     1.1.1.2  	013999999998	PA-5220 	208 days, 7:27:28   	8.0.9
+    fw02.domain.com                     1.1.1.2  	013999999998	PA-5220 	208 days, 7:27:28   	8.0.9
 
 |
 
@@ -93,7 +93,7 @@ To return a list of firewall hostnames use the ``get-panw-firewalls`` command (s
 
     $ get-panw-firewalls -t
     fw01.domain.com
-    fw01.domain.com
+    fw02.domain.com
 
 |
 
