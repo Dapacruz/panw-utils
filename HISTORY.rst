@@ -40,3 +40,8 @@ History
 -------------------
 
 * Migrate from multi-processing to multi-threading
+
+0.5.0 (2019-04-13)
+-------------------
+
+* Added exec-panw-cmd
