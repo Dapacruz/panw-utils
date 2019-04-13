@@ -44,6 +44,8 @@ def main():
         get-panw-interfaces: Returns a list of firewall interfaces
 
         get-panw-config: Returns the firewall configuration
+
+        exec-panw-cmd: Execute arbitrary CLI commands
     '''
     print(commands)
 
