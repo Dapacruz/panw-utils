@@ -49,6 +49,7 @@ setup(
             'get-panw-firewalls=panw_utils.get_panw_firewalls:main',
             'get-panw-interfaces=panw_utils.get_panw_interfaces:main',
             'get-panw-config=panw_utils.get_panw_config:main',
+            'exec-panw-cmd=panw_utils.exec_panw_cmd:main',
         ]
     },
 )

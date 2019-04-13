@@ -76,6 +76,16 @@ Features
 * Multi-threaded
 
 
+**exec-panw-cmd**
+
+* Executes arbitrary CLI commands
+* Command line options
+* Platform independent
+* Save key based auth preference, default user and default firewall
+* Update saved settings
+* Multi-threaded
+
+
 Usage
 =====
 

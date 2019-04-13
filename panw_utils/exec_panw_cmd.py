@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-'''Get firewall configuration
+'''Execute CLI commands
 
-get_panw_config.py
+exec_panw_cmd.py
 
 Author: David Cruz (davidcruz72@gmail.com)
 
@@ -12,7 +12,7 @@ Required Python packages:
     Netmiko
 
 Features:
-    Returns the firewall configuration (set/XML format)
+    Executes arbitrary CLI commands
     Command line options
     Platform independent
     Save key based auth preference, default user and default firewall
@@ -23,19 +23,13 @@ Features:
 import argparse
 from getpass import getpass
 import json
-from collections import namedtuple
 from netmiko import ConnectHandler
-import operator
 import os
 import os.path
 import queue
-import re
 import signal
-import ssl
 import sys
 import threading
-import urllib.request
-import xml.etree.ElementTree as ET
 
 print_queue = queue.Queue()
 
@@ -47,25 +41,12 @@ def sigint_handler(signum, frame):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('firewalls', type=str, nargs='*', help='Space separated list of firewalls to query')
+    parser.add_argument('-c', '--commands', type=str, nargs='*', help='Space separated list of commands')
     parser.add_argument('-U', '--update', action='store_true', help='Update saved settings')
-    parser.add_argument('-f', '--format', choices=['xml', 'set'], default='xml', help='Output format')
-
-    group1 = parser.add_argument_group('Set configuration format')
-    group1.add_argument('-g', '--global-delay-factor', metavar='', type=int, default=1, help='Increase wait time for prompt')
-    group1.add_argument('-u', '--user', metavar='', type=str, help='User')
-    group1.add_argument('-p', '--password', metavar='', type=str, help='Password')
-    group1.add_argument('-K', '--key-based-auth', action='store_true', help='Use key based authentication')
-
-    group2 = parser.add_argument_group('XML configuration format')
-    group2.add_argument('-k', '--key', metavar='', type=str, help='API key')
-    group2.add_argument('-x', '--xpath', metavar='', type=str, help='XML XPath')
-    group2.add_argument('-t', choices=['running',
-                                       'candidate',
-                                       'pushed-template',
-                                       'pushed-shared-policy',
-                                       'merged',
-                                       'synced',
-                                       'synced-diff'], default='running', help='Config type')
+    parser.add_argument('-g', '--global-delay-factor', metavar='', type=int, default=1, help='Increase wait time for prompt')
+    parser.add_argument('-u', '--user', metavar='', type=str, help='User')
+    parser.add_argument('-p', '--password', metavar='', type=str, help='Password')
+    parser.add_argument('-K', '--key-based-auth', action='store_true', help='Use key based authentication')
     return parser.parse_args()
 
 
@@ -78,9 +59,6 @@ def import_saved_settings(settings_path):
         changed = False
         if not 'default_firewall' in settings:
             settings['default_firewall'] = input(f'Default Firewall: ')
-            changed = True
-        if not 'key' in settings:
-            settings['key'] = input('API Key: ')
             changed = True
         if not 'default_user' in settings:
             settings['default_user'] = input('Default User: ')
@@ -111,36 +89,6 @@ def update_saved_settings(settings, settings_path):
     print('\nSettings updated!')
 
 
-def query_api(args, host):
-    # Disable certifcate verification
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-
-    # Get connected firewalls
-    if args.xpath:
-        params = urllib.parse.urlencode({
-        'xpath': args.xpath,
-        'type': 'config',
-        'action': 'show',
-        'key': args.key,
-    })
-    else:
-        params = urllib.parse.urlencode({
-        'type': 'op',
-        'cmd': f'<show><config><{args.t}></{args.t}></config></show>',
-        'key': args.key,
-    })
-    url = f'https://{host}/api/?{params}'
-    try:
-        with urllib.request.urlopen(url, context=ctx) as response:
-            xml_config = response.read().decode('utf-8')
-    except OSError as err:
-        sys.stderr.write(f'{host}: Unable to connect to host ({err})\n')
-        return
-
-    print_config(xml_config, host)
-
 def connect_ssh(args, settings, key_path, host):
     panos = {
         'host': host,
@@ -159,26 +107,25 @@ def connect_ssh(args, settings, key_path, host):
 
     try:
         net_connect = ConnectHandler(**panos)
-        set_config = net_connect.send_command('set cli config-output-format set')
-        set_config = net_connect.send_config_set(['show'])
+        output = []
+        for cmd in args.commands:
+            output.append(f'=== {cmd} ===')
+            output.append('\n'.join(net_connect.send_command(cmd).split('\n')[1:]))
     except Exception as e:
         sys.stderr.write(f'Connection error: {e}')
         sys.exit(1)
     finally:
         net_connect.disconnect()
 
-    # Remove extraneous leading/trailing output
-    set_config = '\n'.join(set_config.split('\n')[4:-4])
-
-    print_config(set_config, host)
+    print_output(output, host)
 
 
-def print_config(config, host):
+def print_output(output, host):
     print_queue.put([
         f'{"=" * (len(host) + 4)}',
         f'= {host} =',
         f'{"=" * (len(host) + 4)}',
-        config,
+        *output,
     ])
 
 
@@ -214,13 +161,11 @@ def main():
         # Remove empty strings (Windows PowerShell Select-String cmdlet issue)
         args.firewalls = list(filter(None, args.firewalls))
 
-    if not args.key:
-        args.key = settings['key']
     if not args.firewalls:
         args.firewalls = [settings['default_firewall']]
     if not args.user:
         args.user = settings['default_user']
-    if args.format == 'set' and not args.key_based_auth and not args.password:
+    if not args.key_based_auth and not args.password:
         args.password = getpass(f"Password ({args.user}): ")
 
     # Start print manager
@@ -229,26 +174,16 @@ def main():
     t.start()
     del t
 
-    # Collect, process and print configuration
-    if args.format == 'xml':
-        worker_threads = []
-        for host in args.firewalls:
-            t = threading.Thread(target=query_api, args=(args, host))
-            worker_threads.append(t)
-            t.start()
-        
-        for t in worker_threads:
-            t.join()
-    elif args.format == 'set':
-        print('Connecting to firewalls via SSH ...', file=sys.stderr)
-        worker_threads = []
-        for host in args.firewalls:
-            t = threading.Thread(target=connect_ssh, args=(args, settings, key_path, host))
-            worker_threads.append(t)
-            t.start()
+    # Execute CLI commands and print output
+    print('Connecting to firewalls via SSH ...', file=sys.stderr)
+    worker_threads = []
+    for host in args.firewalls:
+        t = threading.Thread(target=connect_ssh, args=(args, settings, key_path, host))
+        worker_threads.append(t)
+        t.start()
 
-        for t in worker_threads:
-            t.join()
+    for t in worker_threads:
+        t.join()
 
     print_queue.join()
 
