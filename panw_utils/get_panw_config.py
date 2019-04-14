@@ -45,7 +45,7 @@ def sigint_handler(signum, frame):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Returns the firewall configuration (set/XML format)')
     parser.add_argument('firewalls', type=str, nargs='*', help='Space separated list of firewalls to query')
     parser.add_argument('-U', '--update', action='store_true', help='Update saved settings')
     parser.add_argument('-f', '--format', choices=['xml', 'set'], default='xml', help='Output format')
