@@ -155,7 +155,7 @@ def main():
     # Ctrl+C graceful exit
     signal.signal(signal.SIGINT, sigint_handler)
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Returns a list of firewalls interfaces')
     parser.add_argument('firewalls', type=str, nargs='*', help='Space separated list of firewalls to query')
     parser.add_argument('-k', '--key', metavar='', type=str, help='API key')
     parser.add_argument('-r', '--raw-output', action='store_true', help='Raw XML output')

@@ -39,7 +39,7 @@ def sigint_handler(signum, frame):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Executes arbitrary CLI commands')
     parser.add_argument('firewalls', type=str, nargs='*', help='Space separated list of firewalls to query')
     parser.add_argument('-c', '--commands', type=str, nargs='*', help='Space separated list of commands')
     parser.add_argument('-U', '--update', action='store_true', help='Update saved settings')

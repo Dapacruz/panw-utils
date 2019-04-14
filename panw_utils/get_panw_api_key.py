@@ -88,7 +88,7 @@ def main():
     # Ctrl+C graceful exit
     signal.signal(signal.SIGINT, sigint_handler)
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Returns the current API key, suitable for piping to pbcopy (macOS) or clip.exe (Windows)')
     parser.add_argument('hosts', type=str, metavar='', nargs='*', help='Space separated list of firewalls')
     parser.add_argument('-u', '--user', type=str, metavar='', help='API service account username')
     parser.add_argument('-p', '--password', type=str, metavar='', help='API service account password')
