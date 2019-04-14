@@ -2,7 +2,7 @@
 
 '''Execute CLI commands
 
-exec_panw_cmd.py
+run_panw_cmd.py
 
 Author: David Cruz (davidcruz72@gmail.com)
 

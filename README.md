@@ -47,7 +47,7 @@
 * Update saved settings
 * Multi-threaded
 
-**exec-panw-cmd**
+**run-panw-cmd**
 * Executes arbitrary CLI commands
 * Command line options
 * Platform independent
