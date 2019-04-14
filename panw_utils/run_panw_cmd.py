@@ -175,7 +175,7 @@ def main():
     del t
 
     # Execute CLI commands and print output
-    print('Connecting to firewalls via SSH ...', file=sys.stderr)
+    print('Connecting via SSH ...', file=sys.stderr)
     worker_threads = []
     for host in args.firewalls:
         t = threading.Thread(target=connect_ssh, args=(args, settings, key_path, host))
