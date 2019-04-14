@@ -45,7 +45,7 @@ def main():
 
         get-panw-config: Returns the firewall configuration
 
-        exec-panw-cmd: Execute arbitrary CLI commands
+        run-panw-cmd: Execute arbitrary CLI commands
     '''
     print(commands)
 
