@@ -107,14 +107,10 @@ def print_results(args, results):
                 ip = re.match(regex, ip).group(1)
             except AttributeError:
                 continue
-            if args.if_state == state:
-                print(ip)
-            elif not args.if_state:
+            if not args.if_state or args.if_state == state:
                 print(ip)
         else:
-            if args.if_state == state:
-                print(f'{hostname :25}\t{ifname :20}\t{state :5}\t{ip :20}')
-            elif not args.if_state:
+            if not args.if_state or args.if_state == state:
                 print(f'{hostname :25}\t{ifname :20}\t{state :5}\t{ip :20}')
 
 
@@ -239,10 +235,10 @@ def main():
     for t in worker_threads:
         t.join()
 
-    print_results(args, results)
-
     results_queue.join()
     print_queue.join()
+
+    print_results(args, results)
 
     sys.exit(0)
 
