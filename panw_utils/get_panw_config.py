@@ -35,7 +35,6 @@ import ssl
 import sys
 import threading
 import urllib.request
-import xml.etree.ElementTree as ET
 
 print_queue = queue.Queue()
 

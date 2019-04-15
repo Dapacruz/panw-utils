@@ -37,6 +37,7 @@ import ssl
 import sys
 import threading
 import urllib.request
+import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
 
 results = []
@@ -121,7 +122,7 @@ def worker(args, host):
     xml = query_api(args, host)
 
     if args.raw_output:
-        print_queue.put(xml)
+        print_queue.put(xml.split('\n'))
         return
 
     try:
