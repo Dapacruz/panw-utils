@@ -126,6 +126,7 @@ def print_output(output, host):
         f'= {host} =',
         f'{"=" * (len(host) + 4)}',
         *output,
+        '\n',
     ])
 
 
