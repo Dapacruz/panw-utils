@@ -41,7 +41,7 @@ def sigint_handler(signum, frame):
 def parse_args():
     parser = argparse.ArgumentParser(description='Executes arbitrary CLI commands')
     parser.add_argument('firewalls', type=str, nargs='*', help='Space separated list of firewalls to query')
-    parser.add_argument('-c', '--commands', type=str, nargs='*', help='Space separated list of commands')
+    parser.add_argument('-c', '--command', type=str, action='append', help='CLI command to execute (can be used multiple times)')
     parser.add_argument('-U', '--update', action='store_true', help='Update saved settings')
     parser.add_argument('-g', '--global-delay-factor', metavar='', type=int, default=1, help='Increase wait time for prompt')
     parser.add_argument('-u', '--user', metavar='', type=str, help='User')
@@ -83,7 +83,6 @@ def update_saved_settings(settings, settings_path):
     print('\nUpdating saved settings ...\n')
     settings['default_firewall'] = input(f'New Default Firewall [{settings["default_firewall"]}]: ') or settings['default_firewall']
     settings['default_user'] = input(f'New Default User [{settings["default_user"]}]: ') or settings['default_user']
-    settings['key'] = input(f'New API Key [{settings["key"]}]: ') or settings['key']
     with open(settings_path, 'w') as f:
         json.dump(settings, f, sort_keys=True, indent=2)
     print('\nSettings updated!')
@@ -108,7 +107,7 @@ def connect_ssh(args, settings, key_path, host):
     try:
         net_connect = ConnectHandler(**panos)
         output = []
-        for cmd in args.commands:
+        for cmd in args.command:
             output.append(f'=== {cmd} ===')
             output.append('\n'.join(net_connect.send_command(cmd).split('\n')[1:]))
     except Exception as e:
