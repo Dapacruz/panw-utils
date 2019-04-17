@@ -68,19 +68,21 @@ def worker(args, host):
 
     # Parse and print the API key
     root = ET.fromstring(xml)
-    if args.verbose:
-        print(f'{host + ": " :30}', end='')
     try:
-        print(root.find(".//key").text)
+        api_key = root.find(".//key").text
     except AttributeError as err:
         raise SystemExit(f'Unable to parse API key! ({err})')
+    
+    if args.verbose:
+        print_queue.put(f'{host + ": " :30}{api_key}')
+    else:
+        print_queue.put(api_key)
 
 
 def print_manager():
     while True:
         job = print_queue.get()
-        for line in job:
-            print(line)
+        print(job)
         print_queue.task_done()
 
 
