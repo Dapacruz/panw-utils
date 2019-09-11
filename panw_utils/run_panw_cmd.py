@@ -43,7 +43,7 @@ def parse_args():
     parser.add_argument('firewalls', type=str, nargs='*', help='Space separated list of firewalls to query')
     parser.add_argument('-c', '--command', type=str, action='append', help='CLI command to execute (can be used multiple times)')
     parser.add_argument('-U', '--update', action='store_true', help='Update saved settings')
-    parser.add_argument('-g', '--global-delay-factor', metavar='', type=int, default=1, help='Increase wait time for prompt')
+    parser.add_argument('-g', '--global-delay-factor', metavar='', type=int, default=1, help='Increase wait time for prompt (default is 1)')
     parser.add_argument('-u', '--user', metavar='', type=str, help='User')
     parser.add_argument('-p', '--password', metavar='', type=str, help='Password')
     parser.add_argument('-K', '--key-based-auth', action='store_true', help='Use key based authentication')
