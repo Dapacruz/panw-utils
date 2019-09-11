@@ -41,6 +41,7 @@ print_queue = queue.Queue()
 def sigint_handler(signum, frame):
     sys.exit(1)
 
+
 def query_api(args, host):
     # Disable certifcate verification
     ctx = ssl.create_default_context()
