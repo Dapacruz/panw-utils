@@ -166,8 +166,11 @@ def connect_ssh(args, settings, key_path, host):
     finally:
         net_connect.disconnect()
 
+    # Replace non printable Unicode characters to fix Windows stdout issue
+    set_config = str(set_config.encode('utf-8'))
+
     # Remove extraneous leading/trailing output
-    set_config = '\n'.join(set_config.split('\n')[4:-4])
+    set_config = '\n'.join(set_config.split('\\n')[4:-4])
 
     print_config(set_config, host)
 
