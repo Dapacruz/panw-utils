@@ -65,7 +65,7 @@ def parse_xml(args, root):
     results = {}
     for firewall in root.findall('./result/devices/entry'):
         connected = firewall.find('connected').text
-        if args.state == 'connected' and connected == 'no':
+        if args.terse and connected != 'yes':
             continue
         elif args.state == 'not-connected' and connected == 'yes':
             continue
@@ -130,7 +130,7 @@ def main():
     parser.add_argument('panorama', type=str, nargs='?', help='Panorama device to query')
     parser.add_argument('-k', '--key', metavar='', type=str, help='API key')
     parser.add_argument('-r', '--raw-output', action='store_true', help='Raw XML output')
-    parser.add_argument('-s', '--state', choices=['connected', 'not-connected', 'any'], default='connected', help='Connection state')
+    parser.add_argument('-s', '--state', choices=['connected', 'not-connected', 'any'], default='any', help='Connection state')
     parser.add_argument('-t', '--terse', action='store_true', help='Output firewall names only')
     parser.add_argument('-U', '--update', action='store_true', help='Update saved settings')
     args = parser.parse_args()
