@@ -50,7 +50,7 @@ def parse_args():
     parser.add_argument('-f', '--format', choices=['xml', 'set'], default='xml', help='Output format')
 
     group1 = parser.add_argument_group('Set configuration format')
-    group1.add_argument('-g', '--global-delay-factor', metavar='', type=int, default=1, help='Increase wait time for prompt')
+    group1.add_argument('-g', '--global-delay-factor', metavar='', type=int, default=1, help='Increase wait time for prompt (default is 1)')
     group1.add_argument('-u', '--user', metavar='', type=str, help='User')
     group1.add_argument('-p', '--password', metavar='', type=str, help='Password')
     group1.add_argument('-K', '--key-based-auth', action='store_true', help='Use key based authentication')
@@ -161,7 +161,7 @@ def connect_ssh(args, settings, key_path, host):
         set_config = net_connect.send_command('set cli config-output-format set')
         set_config = net_connect.send_config_set(['show'])
     except Exception as e:
-        sys.stderr.write(f'Connection error: {e}')
+        sys.stderr.write(f'Connection error ({host}): {e}')
         sys.exit(1)
     finally:
         net_connect.disconnect()
