@@ -133,7 +133,8 @@ def query_api(args, host):
     url = f'https://{host}/api/?{params}'
     try:
         with urllib.request.urlopen(url, context=ctx) as response:
-            xml_config = response.read().decode('utf-8')
+            xml_config = response.read()
+            xml_config = '\n'.join(str(xml_config).split('\\n'))
     except OSError as err:
         sys.stderr.write(f'{host}: Unable to connect to host ({err})\n')
         return
