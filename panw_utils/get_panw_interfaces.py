@@ -49,6 +49,7 @@ results_queue = queue.Queue()
 def sigint_handler(signum, frame):
     sys.exit(1)
 
+
 def query_api(args, host):
     # Disable certifcate verification
     ctx = ssl.create_default_context()
@@ -72,9 +73,10 @@ def query_api(args, host):
 
     return xml
 
+
 def parse_xml(root, host):
     hostname = host
-    Interface = namedtuple('Interface', 'hostname ifname state ip')
+    Interface = namedtuple('Interface', 'hostname ifname state status ip mac')
     results = []
     ifnet = root.findall('./result/ifnet/entry')
     hw = root.findall('./result/hw/entry')
@@ -87,9 +89,18 @@ def parse_xml(root, host):
                     state = p_int.find('state').text
                 except AttributeError:
                     state = 'N/A'
-        interface = Interface(hostname, ifname, state, ip)
+                try:
+                    mac = p_int.find('mac').text
+                except AttributeError:
+                    mac = 'N/A'
+                try:
+                    status = p_int.find('st').text
+                except AttributeError:
+                    status = 'N/A'
+        interface = Interface(hostname, ifname, state, status, mac, ip)
         results.append(interface)
     return results
+
 
 def print_results(args, results):
     if args.terse:
@@ -98,10 +109,10 @@ def print_results(args, results):
     # Print header
     if not args.terse:
         print('\n')
-        print(f'{"Firewall" :25}\t{"Interface" :20}\t{"State" :5}\t{"IpAddress" :20}', file=sys.stderr)
-        print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 5 :5}\t{"=" * 20 :20}', file=sys.stderr)
+        print(f'{"Firewall" :25}\t{"Interface" :20}\t{"State" :5}\t{"Status" :24}\t{"MacAddress" :17}\t{"IpAddress" :20}', file=sys.stderr)
+        print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 5 :5}\t{"=" * 24 :24}\t{"=" * 17 :17}\t{"=" * 20 :20}', file=sys.stderr)
 
-    for hostname, ifname, state, ip in results:
+    for hostname, ifname, state, status, mac, ip in results:
         if args.terse:
             try:
                 ip = re.match(regex, ip).group(1)
@@ -111,7 +122,7 @@ def print_results(args, results):
                 print(ip)
         else:
             if not args.if_state or args.if_state == state:
-                print(f'{hostname :25}\t{ifname :20}\t{state :5}\t{ip :20}')
+                print(f'{hostname :25}\t{ifname :20}\t{state :5}\t{status :24}\t{mac :17}\t{ip :20}')
 
 
 def worker(args, host):
@@ -195,7 +206,8 @@ def main():
     if args.update:
         print('\nUpdating saved settings ...\n')
         settings['key'] = input(f'New API Key [{settings["key"]}]: ') or settings['key']
-        settings['default_firewall'] = input(f'New Default Firewall [{settings["default_firewall"]}]: ') or settings['default_firewall']
+        settings['default_firewall'] = input(
+            f'New Default Firewall [{settings["default_firewall"]}]: ') or settings['default_firewall']
         with open(settings_path, 'w') as f:
             json.dump(settings, f, sort_keys=True, indent=2)
         print('\nSettings updated!')
@@ -231,7 +243,7 @@ def main():
         t = threading.Thread(target=worker, args=(args, host))
         worker_threads.append(t)
         t.start()
-    
+
     for t in worker_threads:
         t.join()
 
