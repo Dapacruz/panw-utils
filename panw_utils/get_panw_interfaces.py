@@ -76,28 +76,20 @@ def query_api(args, host):
 
 def parse_xml(root, host):
     hostname = host
-    Interface = namedtuple('Interface', 'hostname ifname state status ip mac')
+    Interface = namedtuple('Interface', 'hostname ifname state status mac zone ip')
     results = []
     ifnet = root.findall('./result/ifnet/entry')
     hw = root.findall('./result/hw/entry')
     for l_int in ifnet:
         ifname = l_int.find('name').text
         ip = l_int.find('ip').text
+        zone = l_int.find('zone').text or 'N/A'
         for p_int in hw:
             if p_int.find('name').text == ifname:
-                try:
-                    state = p_int.find('state').text
-                except AttributeError:
-                    state = 'N/A'
-                try:
-                    mac = p_int.find('mac').text
-                except AttributeError:
-                    mac = 'N/A'
-                try:
-                    status = p_int.find('st').text
-                except AttributeError:
-                    status = 'N/A'
-        interface = Interface(hostname, ifname, state, status, mac, ip)
+                state = p_int.find('state').text or 'N/A'
+                mac = p_int.find('mac').text or 'N/A'
+                status = p_int.find('st').text or 'N/A'
+        interface = Interface(hostname, ifname, state, status, mac, zone, ip)
         results.append(interface)
     return results
 
@@ -109,10 +101,10 @@ def print_results(args, results):
     # Print header
     if not args.terse:
         print('\n')
-        print(f'{"Firewall" :25}\t{"Interface" :20}\t{"State" :5}\t{"Status" :24}\t{"MacAddress" :17}\t{"IpAddress" :20}', file=sys.stderr)
-        print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 5 :5}\t{"=" * 24 :24}\t{"=" * 17 :17}\t{"=" * 20 :20}', file=sys.stderr)
+        print(f'{"Firewall" :25}\t{"Interface" :20}\t{"State" :5}\t{"Status" :24}\t{"MacAddress" :17}\t{"Zone" :17}\t{"IpAddress" :20}', file=sys.stderr)
+        print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 5 :5}\t{"=" * 24 :24}\t{"=" * 17 :17}\t{"=" * 17 :17}\t{"=" * 20 :20}', file=sys.stderr)
 
-    for hostname, ifname, state, status, mac, ip in results:
+    for hostname, ifname, state, status, mac, zone, ip in results:
         if args.terse:
             try:
                 ip = re.match(regex, ip).group(1)
@@ -122,7 +114,7 @@ def print_results(args, results):
                 print(ip)
         else:
             if not args.if_state or args.if_state == state:
-                print(f'{hostname :25}\t{ifname :20}\t{state :5}\t{status :24}\t{mac :17}\t{ip :20}')
+                print(f'{hostname :25}\t{ifname :20}\t{state :5}\t{status :24}\t{mac :17}\t{zone :17}\t{ip :20}')
 
 
 def worker(args, host):
