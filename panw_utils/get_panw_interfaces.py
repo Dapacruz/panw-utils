@@ -50,18 +50,14 @@ def sigint_handler(signum, frame):
     sys.exit(1)
 
 
-def query_api(args, host):
+def query_api(host, params):
     # Disable certifcate verification
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
 
     # Get connected firewalls
-    params = urllib.parse.urlencode({
-        'type': 'op',
-        'cmd': '<show><interface>all</interface></show>',
-        'key': args.key,
-    })
+    params = urllib.parse.urlencode(params)
     url = f'https://{host}/api/?{params}'
 
     try:
@@ -74,10 +70,9 @@ def query_api(args, host):
     return xml
 
 
-def parse_xml(root, host):
-    hostname = host
-    Interface = namedtuple('Interface', 'hostname ifname state status mac zone ip')
-    results = []
+def parse_interfaces(root, hostname):
+    # Interface = namedtuple('Interface', 'hostname ifname state status mac zone ip comment')
+    interfaces = []
     ifnet = root.findall('./result/ifnet/entry')
     hw = root.findall('./result/hw/entry')
     for l_int in ifnet:
@@ -89,48 +84,83 @@ def parse_xml(root, host):
                 state = p_int.find('state').text or 'N/A'
                 mac = p_int.find('mac').text or 'N/A'
                 status = p_int.find('st').text or 'N/A'
-        interface = Interface(hostname, ifname, state, status, mac, zone, ip)
-        results.append(interface)
-    return results
+        # interface = Interface(hostname, ifname, state, status, mac, zone, ip, '')
+        interface = {
+            'hostname': hostname,
+            'ifname': ifname,
+            'state': state,
+            'status': status,
+            'mac': mac,
+            'zone': zone,
+            'ip': ip
+        }
+        interfaces.append(interface)
+    return interfaces
 
 
-def print_results(args, results):
+def parse_interfaces_config(root, interfaces):
+    for interface in interfaces:
+        try:
+            interface['comment'] = root.find(f'./result/ethernet/entry[@name="{interface["ifname"]}"]/comment').text
+        except AttributeError:
+            interface['comment'] = ''
+    return interfaces
+
+
+def print_results(args, interfaces):
     if args.terse:
         regex = re.compile(r'.*?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*$')
 
     # Print header
     if not args.terse:
         print('\n')
-        print(f'{"Firewall" :25}\t{"Interface" :20}\t{"State" :5}\t{"Status" :24}\t{"MacAddress" :17}\t{"Zone" :17}\t{"IpAddress" :20}', file=sys.stderr)
-        print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 5 :5}\t{"=" * 24 :24}\t{"=" * 17 :17}\t{"=" * 17 :17}\t{"=" * 20 :20}', file=sys.stderr)
+        print(f'{"Firewall" :25}\t{"Interface" :20}\t{"State" :5}\t{"Status" :24}\t{"MacAddress" :17}\t{"Zone" :17}\t{"IpAddress" :20}\t{"Comment" :25}', file=sys.stderr)
+        print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 5 :5}\t{"=" * 24 :24}\t{"=" * 17 :17}\t{"=" * 17 :17}\t{"=" * 20 :20}\t{"=" * 25 :25}', file=sys.stderr)
 
-    for hostname, ifname, state, status, mac, zone, ip in results:
+    for int in interfaces:
         if args.terse:
             try:
-                ip = re.match(regex, ip).group(1)
+                int['ip'] = re.match(regex, int['ip']).group(1)
             except AttributeError:
                 continue
-            if not args.if_state or args.if_state == state:
-                print(ip)
+            if not args.if_state or args.if_state == int['state']:
+                print(int['ip'])
         else:
-            if not args.if_state or args.if_state == state:
-                print(f'{hostname :25}\t{ifname :20}\t{state :5}\t{status :24}\t{mac :17}\t{zone :17}\t{ip :20}')
+            if not args.if_state or args.if_state == int['state']:
+                print(
+                    f'{int["hostname"] :25}\t{int["ifname"] :20}\t{int["state"] :5}\t{int["status"] :24}\t{int["mac"] :17}\t{int["zone"] :17}\t{int["ip"] :20}\t{int["comment"] :25}')
 
 
 def worker(args, host):
-    xml = query_api(args, host)
+    url_params = {
+        'type': 'op',
+        'cmd': '<show><interface>all</interface></show>',
+        'key': args.key,
+    }
+    xml = query_api(host, url_params)
 
     if args.raw_output:
         print_queue.put(xml.split('\n'))
         return
 
     try:
-        root = ET.fromstring(xml)
+        interfaces = parse_interfaces(ET.fromstring(xml), host)
     except TypeError as err:
         raise SystemExit(f'Unable to parse XML! ({err})')
 
-    interfaces = parse_xml(root, host)
-    sorted_interfaces = sorted(interfaces, key=operator.attrgetter('hostname', 'ifname'))
+    url_params = {
+        'type': 'config',
+        'action': 'show',
+        'xpath': 'devices/entry/network/interface/ethernet',
+        'key': args.key,
+    }
+    xml = query_api(host, url_params)
+    try:
+        interfaces = parse_interfaces_config(ET.fromstring(xml), interfaces)
+    except TypeError as err:
+        raise SystemExit(f'Unable to parse XML! ({err})')
+
+    sorted_interfaces = sorted(interfaces, key=operator.itemgetter('hostname', 'ifname'))
     results_queue.put(sorted_interfaces)
 
 
