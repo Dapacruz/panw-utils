@@ -49,5 +49,5 @@ History
 0.6.0 (2020-09-14)
 -------------------
 
-* Added Added status, MAC address, zone, virtual router and comment to get-panw-interfaces output
+* Added status, MAC address, zone, virtual router and comment to get-panw-interfaces output
 * Bumped requirements versions
