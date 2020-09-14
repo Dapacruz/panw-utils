@@ -11,7 +11,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['cryptography==2.7', 'netmiko==2.4.2']
+requirements = ['cryptography==2.7', 'netmiko==2.4.2', 'lxml==4.5.2']
 
 setup_requirements = [ ]
 

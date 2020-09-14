@@ -9,7 +9,7 @@ Author: David Cruz (davidcruz72@gmail.com)
 Python version >= 3.6
 
 Required Python packages:
-    None
+    lxml
 
 Features:
     Returns a list of firewalls interfaces
@@ -26,7 +26,6 @@ Features:
 
 import argparse
 import json
-from collections import namedtuple
 import operator
 import os
 import os.path
@@ -37,8 +36,7 @@ import ssl
 import sys
 import threading
 import urllib.request
-import xml.dom.minidom as MD
-import xml.etree.ElementTree as ET
+import lxml.etree as ET
 
 results = []
 
@@ -71,7 +69,6 @@ def query_api(host, params):
 
 
 def parse_interfaces(root, hostname):
-    # Interface = namedtuple('Interface', 'hostname ifname state status mac zone ip comment')
     interfaces = []
     ifnet = root.findall('./result/ifnet/entry')
     hw = root.findall('./result/hw/entry')
@@ -98,12 +95,22 @@ def parse_interfaces(root, hostname):
     return interfaces
 
 
-def parse_interfaces_config(root, interfaces):
+def parse_interface_comments(root, interfaces):
     for interface in interfaces:
         try:
-            interface['comment'] = root.find(f'./result/ethernet/entry[@name="{interface["ifname"]}"]/comment').text
+            interface['comment'] = root.find(f'./result/network/interface/ethernet/entry[@name="{interface["ifname"]}"]/comment').text
         except AttributeError:
             interface['comment'] = ''
+    return interfaces
+
+
+def parse_interface_vrouter(root, interfaces):
+    for interface in interfaces:
+        try:
+            vrouter = root.xpath(f'//member[text()="{interface["ifname"]}"]')[0].getparent().getparent().get('name')
+            interface['vrouter'] = vrouter if vrouter != None else 'N/A'
+        except IndexError:
+            interface['vrouter'] = 'N/A'
     return interfaces
 
 
@@ -114,8 +121,8 @@ def print_results(args, interfaces):
     # Print header
     if not args.terse:
         print('\n')
-        print(f'{"Firewall" :25}\t{"Interface" :20}\t{"State" :5}\t{"Status" :24}\t{"MacAddress" :17}\t{"Zone" :17}\t{"IpAddress" :20}\t{"Comment" :25}', file=sys.stderr)
-        print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 5 :5}\t{"=" * 24 :24}\t{"=" * 17 :17}\t{"=" * 17 :17}\t{"=" * 20 :20}\t{"=" * 25 :25}', file=sys.stderr)
+        print(f'{"Firewall" :25}\t{"Interface" :20}\t{"State" :5}\t{"Status" :24}\t{"MacAddress" :17}\t{"Zone" :17}\t{"IpAddress" :20}\t{"VirtualRouter" :25}\t{"Comment" :25}', file=sys.stderr)
+        print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 5 :5}\t{"=" * 24 :24}\t{"=" * 17 :17}\t{"=" * 17 :17}\t{"=" * 20 :20}\t{"=" * 25 :25}\t{"=" * 25 :25}', file=sys.stderr)
 
     for int in interfaces:
         if args.terse:
@@ -128,7 +135,7 @@ def print_results(args, interfaces):
         else:
             if not args.if_state or args.if_state == int['state']:
                 print(
-                    f'{int["hostname"] :25}\t{int["ifname"] :20}\t{int["state"] :5}\t{int["status"] :24}\t{int["mac"] :17}\t{int["zone"] :17}\t{int["ip"] :20}\t{int["comment"] :25}')
+                    f'{int["hostname"] :25}\t{int["ifname"] :20}\t{int["state"] :5}\t{int["status"] :24}\t{int["mac"] :17}\t{int["zone"] :17}\t{int["ip"] :20}\t{int["vrouter"] :25}\t{int["comment"] :25}')
 
 
 def worker(args, host):
@@ -151,12 +158,19 @@ def worker(args, host):
     url_params = {
         'type': 'config',
         'action': 'show',
-        'xpath': 'devices/entry/network/interface/ethernet',
+        'xpath': 'devices/entry/network',
         'key': args.key,
     }
     xml = query_api(host, url_params)
+    root = ET.fromstring(xml)
+    
     try:
-        interfaces = parse_interfaces_config(ET.fromstring(xml), interfaces)
+        interfaces = parse_interface_comments(root, interfaces)
+    except TypeError as err:
+        raise SystemExit(f'Unable to parse XML! ({err})')
+
+    try:
+        interfaces = parse_interface_vrouter(root, interfaces)
     except TypeError as err:
         raise SystemExit(f'Unable to parse XML! ({err})')
 
