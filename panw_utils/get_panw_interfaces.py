@@ -78,14 +78,12 @@ def parse_interfaces(root, hostname):
         zone = l_int.find('zone').text or 'N/A'
         for p_int in hw:
             if p_int.find('name').text == ifname:
-                state = p_int.find('state').text or 'N/A'
                 mac = p_int.find('mac').text or 'N/A'
                 status = p_int.find('st').text or 'N/A'
         # interface = Interface(hostname, ifname, state, status, mac, zone, ip, '')
         interface = {
             'hostname': hostname,
             'ifname': ifname,
-            'state': state,
             'status': status,
             'mac': mac,
             'zone': zone,
@@ -95,12 +93,22 @@ def parse_interfaces(root, hostname):
     return interfaces
 
 
-def parse_interface_comments(root, interfaces):
+def parse_interface_config(root, interfaces):
     for interface in interfaces:
         try:
             interface['comment'] = root.find(f'./result/network/interface/ethernet/entry[@name="{interface["ifname"]}"]/comment').text
         except AttributeError:
             interface['comment'] = ''
+
+        # Check the state of physical interfaces only
+        if re.match(r'^ethernet\d+/\d+$', interface['ifname']):
+            try:
+                interface['state'] = root.find(f'./result/network/interface/ethernet/entry[@name="{interface["ifname"]}"]/link-state').text
+            except AttributeError:
+                # Default interface state auto returns nothing
+                interface['state'] = 'auto'
+        else:
+            interface['state'] = 'N/A'
     return interfaces
 
 
@@ -121,8 +129,8 @@ def print_results(args, interfaces):
     # Print header
     if not args.terse:
         print('\n')
-        print(f'{"Firewall" :25}\t{"Interface" :20}\t{"State" :5}\t{"Status" :24}\t{"MacAddress" :17}\t{"Zone" :17}\t{"IpAddress" :20}\t{"VirtualRouter" :25}\t{"Comment" :25}', file=sys.stderr)
-        print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 5 :5}\t{"=" * 24 :24}\t{"=" * 17 :17}\t{"=" * 17 :17}\t{"=" * 20 :20}\t{"=" * 25 :25}\t{"=" * 25 :25}', file=sys.stderr)
+        print(f'{"Firewall" :25}\t{"Interface" :20}\t{"LinkState" :5}\t{"Status" :24}\t{"MacAddress" :17}\t{"Zone" :17}\t{"IpAddress" :20}\t{"VirtualRouter" :25}\t{"Comment" :25}', file=sys.stderr)
+        print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 9 :9}\t{"=" * 24 :24}\t{"=" * 17 :17}\t{"=" * 17 :17}\t{"=" * 20 :20}\t{"=" * 25 :25}\t{"=" * 25 :25}', file=sys.stderr)
 
     for int in interfaces:
         if args.terse:
@@ -135,7 +143,7 @@ def print_results(args, interfaces):
         else:
             if not args.if_state or args.if_state == int['state']:
                 print(
-                    f'{int["hostname"] :25}\t{int["ifname"] :20}\t{int["state"] :5}\t{int["status"] :24}\t{int["mac"] :17}\t{int["zone"] :17}\t{int["ip"] :20}\t{int["vrouter"] :25}\t{int["comment"] :25}')
+                    f'{int["hostname"] :25}\t{int["ifname"] :20}\t{int["state"] :9}\t{int["status"] :24}\t{int["mac"] :17}\t{int["zone"] :17}\t{int["ip"] :20}\t{int["vrouter"] :25}\t{int["comment"] :25}')
 
 
 def worker(args, host):
@@ -165,7 +173,7 @@ def worker(args, host):
     root = ET.fromstring(xml)
     
     try:
-        interfaces = parse_interface_comments(root, interfaces)
+        interfaces = parse_interface_config(root, interfaces)
     except TypeError as err:
         raise SystemExit(f'Unable to parse XML! ({err})')
 
