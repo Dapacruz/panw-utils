@@ -69,60 +69,68 @@ def query_api(host, params):
 
 
 def parse_interfaces(root, hostname):
-    interfaces = []
-    ifnet = root.findall('./result/ifnet/entry')
+    interfaces = {}
+
     hw = root.findall('./result/hw/entry')
-    for l_int in ifnet:
-        ifname = l_int.find('name').text
-        ip = l_int.find('ip').text
-        zone = l_int.find('zone').text or 'N/A'
-        for p_int in hw:
-            if p_int.find('name').text == ifname:
-                mac = p_int.find('mac').text or 'N/A'
-                status = p_int.find('st').text or 'N/A'
-        # interface = Interface(hostname, ifname, state, status, mac, zone, ip, '')
-        interface = {
+    for int in hw:
+        ifname = int.find('name').text
+        mac = int.find('mac').text
+        status = int.find('st').text
+
+        interfaces[ifname] = {
             'hostname': hostname,
-            'ifname': ifname,
-            'status': status,
             'mac': mac,
-            'zone': zone,
-            'ip': ip
+            'status': status
         }
-        interfaces.append(interface)
+
+    ifnet = root.findall('./result/ifnet/entry')
+    for int in ifnet:
+        ifname = int.find('name').text
+        ip = int.find('ip').text or 'N/A'
+        zone = int.find('zone').text or 'N/A'
+
+        if ifname in interfaces.keys():
+            interfaces[ifname]['hostname'] = hostname
+            interfaces[ifname]['zone'] = zone
+            interfaces[ifname]['ip'] = ip
+        else:
+            interfaces[ifname] = {
+                'hostname': hostname,
+                'zone': zone,
+                'ip': ip
+            }
+
     return interfaces
 
 
 def parse_interface_config(root, interfaces):
-    for interface in interfaces:
+    for ifname in interfaces.keys():
         try:
-            interface['comment'] = root.find(f'./result/network/interface/ethernet/entry[@name="{interface["ifname"]}"]/comment').text
+            interfaces[ifname]['comment'] = root.find(f'./result/network/interface/ethernet/entry[@name="{ifname}"]/comment').text
         except AttributeError:
-            interface['comment'] = ''
+            interfaces[ifname]['comment'] = ''
 
         # Check the state of physical interfaces only
-        if re.match(r'^ethernet\d+/\d+$', interface['ifname']):
+        if re.match(r'^ethernet\d+/\d+$', ifname):
             try:
-                interface['state'] = root.find(f'./result/network/interface/ethernet/entry[@name="{interface["ifname"]}"]/link-state').text
+                interfaces[ifname]['state'] = root.find(f'./result/network/interface/ethernet/entry[@name="{ifname}"]/link-state').text
             except AttributeError:
                 # Default interface state auto returns nothing
-                interface['state'] = 'auto'
-        else:
-            interface['state'] = 'N/A'
+                interfaces[ifname]['state'] = 'auto'
     return interfaces
 
 
 def parse_interface_vrouter(root, interfaces):
-    for interface in interfaces:
+    for ifname in interfaces.keys():
         try:
-            vrouter = root.xpath(f'//member[text()="{interface["ifname"]}"]')[0].getparent().getparent().get('name')
-            interface['vrouter'] = vrouter if vrouter != None else 'N/A'
+            vrouter = root.xpath(f'//member[text()="{ifname}"]')[0].getparent().getparent().get('name')
+            interfaces[ifname]['vrouter'] = vrouter if vrouter != None else 'N/A'
         except IndexError:
-            interface['vrouter'] = 'N/A'
+            interfaces[ifname]['vrouter'] = 'N/A'
     return interfaces
 
 
-def print_results(args, interfaces):
+def print_results(args, results):
     if args.terse:
         regex = re.compile(r'.*?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*$')
 
@@ -132,18 +140,27 @@ def print_results(args, interfaces):
         print(f'{"Firewall" :25}\t{"Interface" :20}\t{"LinkState" :5}\t{"Status" :24}\t{"MacAddress" :17}\t{"Zone" :17}\t{"IpAddress" :20}\t{"VirtualRouter" :25}\t{"Comment" :25}', file=sys.stderr)
         print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 9 :9}\t{"=" * 24 :24}\t{"=" * 17 :17}\t{"=" * 17 :17}\t{"=" * 20 :20}\t{"=" * 25 :25}\t{"=" * 25 :25}', file=sys.stderr)
 
-    for int in interfaces:
-        if args.terse:
-            try:
-                int['ip'] = re.match(regex, int['ip']).group(1)
-            except AttributeError:
-                continue
-            if not args.if_state or args.if_state == int['state']:
-                print(int['ip'])
-        else:
-            if not args.if_state or args.if_state == int['state']:
-                print(
-                    f'{int["hostname"] :25}\t{int["ifname"] :20}\t{int["state"] :9}\t{int["status"] :24}\t{int["mac"] :17}\t{int["zone"] :17}\t{int["ip"] :20}\t{int["vrouter"] :25}\t{int["comment"] :25}')
+    for int in results:
+        for ifname in sorted(int.keys()):
+            hostname = int[ifname].get('hostname')
+            state = int[ifname].get('state', 'N/A')
+            status = int[ifname].get('status', 'N/A')
+            mac = int[ifname].get('mac', 'N/A')
+            zone = int[ifname].get('zone', 'N/A')
+            ip = int[ifname].get('ip', 'N/A')
+            vrouter = int[ifname].get('vrouter', 'N/A')
+            comment = int[ifname].get('comment', '')
+            if args.terse:
+                try:
+                    ip = re.match(regex, ip).group(1)
+                except AttributeError:
+                    continue
+                if not args.if_status or args.if_status in status:
+                    print(ip)
+            else:
+                if not args.if_status or args.if_status in status:
+                    print(
+                        f'{hostname :25}\t{ifname :20}\t{state :9}\t{status :24}\t{mac :17}\t{zone :17}\t{ip :20}\t{vrouter :25}\t{comment :25}')
 
 
 def worker(args, host):
@@ -171,7 +188,7 @@ def worker(args, host):
     }
     xml = query_api(host, url_params)
     root = ET.fromstring(xml)
-    
+
     try:
         interfaces = parse_interface_config(root, interfaces)
     except TypeError as err:
@@ -181,9 +198,7 @@ def worker(args, host):
         interfaces = parse_interface_vrouter(root, interfaces)
     except TypeError as err:
         raise SystemExit(f'Unable to parse XML! ({err})')
-
-    sorted_interfaces = sorted(interfaces, key=operator.itemgetter('hostname', 'ifname'))
-    results_queue.put(sorted_interfaces)
+    results_queue.put(interfaces)
 
 
 def print_manager():
@@ -199,7 +214,7 @@ def results_manager():
 
     while True:
         result = results_queue.get()
-        results += result
+        results.append(result)
         results_queue.task_done()
 
 
@@ -213,8 +228,13 @@ def main():
     parser.add_argument('-r', '--raw-output', action='store_true', help='Raw XML output')
     parser.add_argument('-t', '--terse', action='store_true', help='Output IP addresses only')
     parser.add_argument('-U', '--update', action='store_true', help='Update saved settings')
-    parser.add_argument('--if-state', metavar='', choices=['up', 'down'], help='Filter on interface state')
+    parser.add_argument('--if-status', metavar='', choices=['up', 'down'], help='Filter on interface state')
+    parser.add_argument('--if-state', metavar='', choices=['up', 'down'], help='DEPRECATED: Filter on interface state')
     args = parser.parse_args()
+
+    # Deprecated: Remove args.if_state in the near future
+    if args.if_state:
+        args.if_status = args.if_state
 
     if 'USERPROFILE' in os.environ:
         settings_path = os.path.join(os.environ["USERPROFILE"], '.panw-settings.json')
