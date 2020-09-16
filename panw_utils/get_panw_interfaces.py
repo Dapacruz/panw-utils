@@ -77,9 +77,9 @@ def parse_interfaces(root, hostname):
         status = int.find('st').text
 
         interfaces[ifname] = {
-            'hostname': hostname,
-            'mac': mac,
-            'status': status
+            'Firewall': hostname,
+            'MacAddress': mac,
+            'Status': status
         }
 
     ifnet = root.findall('./result/ifnet/entry')
@@ -90,9 +90,9 @@ def parse_interfaces(root, hostname):
 
         interfaces[ifname] = {
             **interfaces.get(ifname, {}),
-            'hostname': hostname,
-            'zone': zone,
-            'ip': ip
+            'Firewall': hostname,
+            'Zone': zone,
+            'IpAddress': ip
         }
 
     return interfaces
@@ -101,61 +101,116 @@ def parse_interfaces(root, hostname):
 def parse_interface_config(root, interfaces):
     for ifname, attrs in interfaces.items():
         try:
-            attrs['comment'] = root.find(f'./result/network/interface/ethernet/entry[@name="{ifname}"]/comment').text
+            attrs['Comment'] = root.find(f'./result/network/interface/ethernet/entry[@name="{ifname}"]/comment').text
         except AttributeError:
-            attrs['comment'] = ''
+            attrs['Comment'] = ''
 
-        # Check the state of physical interfaces only
+        # Collect the link state of physical interfaces only
         if re.match(r'^ethernet\d+/\d+$', ifname):
             try:
-                attrs['state'] = root.find(f'./result/network/interface/ethernet/entry[@name="{ifname}"]/link-state').text
+                attrs['LinkState'] = root.find(f'./result/network/interface/ethernet/entry[@name="{ifname}"]/link-state').text
             except AttributeError:
                 # Default interface state auto returns nothing
-                attrs['state'] = 'auto'
-    return interfaces
+                attrs['LinkState'] = 'auto'
 
-
-def parse_interface_vrouter(root, interfaces):
-    for ifname, attrs in interfaces.items():
         try:
             vrouter = root.xpath(f'//member[text()="{ifname}"]')[0].getparent().getparent().get('name')
-            attrs['vrouter'] = vrouter if vrouter != None else 'N/A'
+            attrs['VirtualRouter'] = vrouter if vrouter != None else 'N/A'
         except IndexError:
-            attrs['vrouter'] = 'N/A'
+            attrs['VirtualRouter'] = 'N/A'
+
     return interfaces
 
 
 def print_results(args, results):
     if args.terse:
         regex = re.compile(r'.*?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*$')
+    else:
+        fields = {
+            'Firewall': {
+                'width': 25,
+                'na': 'N/A'
+            },
+            'Interface': {
+                'width': 20,
+                'na': 'N/A'
+            },
+            'LinkState': {
+                'width': 9,
+                'na': 'N/A'
+            },
+            'Status': {
+                'width': 24,
+                'na': 'N/A'
+            },
+            'MacAddress': {
+                'width': 17,
+                'na': 'N/A'
+            },
+            'Zone': {
+                'width': 17,
+                'na': 'N/A'
+            },
+            'IpAddress': {
+                'width': 20,
+                'na': 'N/A'
+            },
+            'VirtualRouter': {
+                'width': 25,
+                'na': 'N/A'
+            },
+            'Comment': {
+                'width': 25,
+                'na': ''
+            },
+        }
 
-    # Print header
-    if not args.terse:
+        # Print header
+        header = ''
+        hr = ''
+        first_iter = True
+        for field, attrs in fields.items():
+            if not first_iter:
+                header += '\t'
+                hr += '\t'
+            else:
+                first_iter = False
+            header += f'{field :<{attrs["width"]}}'
+            hr += f'{("=" * attrs["width"]) :<{attrs["width"]}}'
+
         print('\n')
-        print(f'{"Firewall" :25}\t{"Interface" :20}\t{"LinkState" :5}\t{"Status" :24}\t{"MacAddress" :17}\t{"Zone" :17}\t{"IpAddress" :20}\t{"VirtualRouter" :25}\t{"Comment" :25}', file=sys.stderr)
-        print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 9 :9}\t{"=" * 24 :24}\t{"=" * 17 :17}\t{"=" * 17 :17}\t{"=" * 20 :20}\t{"=" * 25 :25}\t{"=" * 25 :25}', file=sys.stderr)
+        print(header, file=sys.stderr)
+        print(hr, file=sys.stderr)
 
     for interfaces in results:
-        for ifname, attrs in sorted(interfaces.items()):
-            hostname = attrs.get('hostname')
-            state = attrs.get('state', 'N/A')
-            status = attrs.get('status', 'N/A')
-            mac = attrs.get('mac', 'N/A')
-            zone = attrs.get('zone', 'N/A')
-            ip = attrs.get('ip', 'N/A')
-            vrouter = attrs.get('vrouter', 'N/A')
-            comment = attrs.get('comment', '')
-
+        for ifname, if_attrs in sorted(interfaces.items()):
+            if_status = if_attrs.get('Status', 'N/A')
             if args.terse:
                 try:
-                    ip = re.match(regex, ip).group(1)
+                    ip = re.match(regex, if_attrs.get('IpAddress', '')).group(1)
                 except AttributeError:
                     continue
-                if not args.if_status or args.if_status in status:
+
+                if not args.if_status or args.if_status in if_status:
                     print(ip)
             else:
-                if not args.if_status or args.if_status in status:
-                    print(f'{hostname :25}\t{ifname :20}\t{state :9}\t{status :24}\t{mac :17}\t{zone :17}\t{ip :20}\t{vrouter :25}\t{comment :25}')
+                if not args.if_status or args.if_status in if_status:
+                    line = ''
+                    first_iter = True
+                    for field in fields.keys():
+                        if not first_iter:
+                            line += '\t'
+                        else:
+                            first_iter = False
+
+                        if field == 'Interface':
+                            line += f'{ifname :<{fields["Interface"]["width"]}}'
+                            continue
+
+                        attr = if_attrs.get(field, fields[field]["na"])
+                        line += f'{attr :<{fields[field]["width"]}}'
+
+                    print(line)
 
 
 def worker(args, host):
@@ -170,6 +225,7 @@ def worker(args, host):
         print_queue.put(xml.split('\n'))
         return
 
+    # Parse interface operational information
     try:
         interfaces = parse_interfaces(ET.fromstring(xml), host)
     except TypeError as err:
@@ -184,15 +240,12 @@ def worker(args, host):
     xml = query_api(host, url_params)
     root = ET.fromstring(xml)
 
+    # Parse interface configuration
     try:
         interfaces = parse_interface_config(root, interfaces)
     except TypeError as err:
         raise SystemExit(f'Unable to parse XML! ({err})')
 
-    try:
-        interfaces = parse_interface_vrouter(root, interfaces)
-    except TypeError as err:
-        raise SystemExit(f'Unable to parse XML! ({err})')
     results_queue.put(interfaces)
 
 
