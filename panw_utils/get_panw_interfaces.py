@@ -26,7 +26,6 @@ Features:
 
 import argparse
 import json
-import operator
 import os
 import os.path
 import queue
@@ -89,44 +88,40 @@ def parse_interfaces(root, hostname):
         ip = int.find('ip').text or 'N/A'
         zone = int.find('zone').text or 'N/A'
 
-        if ifname in interfaces.keys():
-            interfaces[ifname]['hostname'] = hostname
-            interfaces[ifname]['zone'] = zone
-            interfaces[ifname]['ip'] = ip
-        else:
-            interfaces[ifname] = {
-                'hostname': hostname,
-                'zone': zone,
-                'ip': ip
-            }
+        interfaces[ifname] = {
+            **interfaces.get(ifname, {}),
+            'hostname': hostname,
+            'zone': zone,
+            'ip': ip
+        }
 
     return interfaces
 
 
 def parse_interface_config(root, interfaces):
-    for ifname in interfaces.keys():
+    for ifname, attrs in interfaces.items():
         try:
-            interfaces[ifname]['comment'] = root.find(f'./result/network/interface/ethernet/entry[@name="{ifname}"]/comment').text
+            attrs['comment'] = root.find(f'./result/network/interface/ethernet/entry[@name="{ifname}"]/comment').text
         except AttributeError:
-            interfaces[ifname]['comment'] = ''
+            attrs['comment'] = ''
 
         # Check the state of physical interfaces only
         if re.match(r'^ethernet\d+/\d+$', ifname):
             try:
-                interfaces[ifname]['state'] = root.find(f'./result/network/interface/ethernet/entry[@name="{ifname}"]/link-state').text
+                attrs['state'] = root.find(f'./result/network/interface/ethernet/entry[@name="{ifname}"]/link-state').text
             except AttributeError:
                 # Default interface state auto returns nothing
-                interfaces[ifname]['state'] = 'auto'
+                attrs['state'] = 'auto'
     return interfaces
 
 
 def parse_interface_vrouter(root, interfaces):
-    for ifname in interfaces.keys():
+    for ifname, attrs in interfaces.items():
         try:
             vrouter = root.xpath(f'//member[text()="{ifname}"]')[0].getparent().getparent().get('name')
-            interfaces[ifname]['vrouter'] = vrouter if vrouter != None else 'N/A'
+            attrs['vrouter'] = vrouter if vrouter != None else 'N/A'
         except IndexError:
-            interfaces[ifname]['vrouter'] = 'N/A'
+            attrs['vrouter'] = 'N/A'
     return interfaces
 
 
@@ -140,16 +135,17 @@ def print_results(args, results):
         print(f'{"Firewall" :25}\t{"Interface" :20}\t{"LinkState" :5}\t{"Status" :24}\t{"MacAddress" :17}\t{"Zone" :17}\t{"IpAddress" :20}\t{"VirtualRouter" :25}\t{"Comment" :25}', file=sys.stderr)
         print(f'{"=" * 25 :25}\t{"=" * 20 :20}\t{"=" * 9 :9}\t{"=" * 24 :24}\t{"=" * 17 :17}\t{"=" * 17 :17}\t{"=" * 20 :20}\t{"=" * 25 :25}\t{"=" * 25 :25}', file=sys.stderr)
 
-    for int in results:
-        for ifname in sorted(int.keys()):
-            hostname = int[ifname].get('hostname')
-            state = int[ifname].get('state', 'N/A')
-            status = int[ifname].get('status', 'N/A')
-            mac = int[ifname].get('mac', 'N/A')
-            zone = int[ifname].get('zone', 'N/A')
-            ip = int[ifname].get('ip', 'N/A')
-            vrouter = int[ifname].get('vrouter', 'N/A')
-            comment = int[ifname].get('comment', '')
+    for interfaces in results:
+        for ifname, attrs in sorted(interfaces.items()):
+            hostname = attrs.get('hostname')
+            state = attrs.get('state', 'N/A')
+            status = attrs.get('status', 'N/A')
+            mac = attrs.get('mac', 'N/A')
+            zone = attrs.get('zone', 'N/A')
+            ip = attrs.get('ip', 'N/A')
+            vrouter = attrs.get('vrouter', 'N/A')
+            comment = attrs.get('comment', '')
+
             if args.terse:
                 try:
                     ip = re.match(regex, ip).group(1)
@@ -159,8 +155,7 @@ def print_results(args, results):
                     print(ip)
             else:
                 if not args.if_status or args.if_status in status:
-                    print(
-                        f'{hostname :25}\t{ifname :20}\t{state :9}\t{status :24}\t{mac :17}\t{zone :17}\t{ip :20}\t{vrouter :25}\t{comment :25}')
+                    print(f'{hostname :25}\t{ifname :20}\t{state :9}\t{status :24}\t{mac :17}\t{zone :17}\t{ip :20}\t{vrouter :25}\t{comment :25}')
 
 
 def worker(args, host):
