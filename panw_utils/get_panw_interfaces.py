@@ -113,6 +113,14 @@ def parse_interface_config(root, interfaces):
                 # Default interface state auto returns nothing
                 attrs['LinkState'] = 'auto'
 
+        # Collect the aggregate-group
+        if re.match(r'^ethernet\d+/\d+$', ifname):
+            try:
+                attrs['AggGrp'] = root.find(f'./result/network/interface/ethernet/entry[@name="{ifname}"]/aggregate-group').text
+            except AttributeError:
+                # Default interface state auto returns nothing
+                attrs['AggGrp'] = 'N/A'
+
         try:
             vrouter = root.xpath(f'//member[text()="{ifname}"]')[0].getparent().getparent().get('name')
             attrs['VirtualRouter'] = vrouter if vrouter != None else 'N/A'
@@ -128,7 +136,7 @@ def print_results(args, results):
     else:
         fields = {
             'Firewall': {
-                'width': 25,
+                'width': 29,
                 'na': 'N/A'
             },
             'Interface': {
@@ -147,12 +155,16 @@ def print_results(args, results):
                 'width': 17,
                 'na': 'N/A'
             },
+            'AggGrp': {
+                'width': 6,
+                'na': 'N/A'
+            },
             'Zone': {
                 'width': 17,
                 'na': 'N/A'
             },
             'IpAddress': {
-                'width': 20,
+                'width': 17,
                 'na': 'N/A'
             },
             'VirtualRouter': {
@@ -182,6 +194,7 @@ def print_results(args, results):
         print(header, file=sys.stderr)
         print(hr, file=sys.stderr)
 
+    # Print interfaces info
     for interfaces in results:
         for ifname, if_attrs in sorted(interfaces.items()):
             if_status = if_attrs.get('Status', 'N/A')
