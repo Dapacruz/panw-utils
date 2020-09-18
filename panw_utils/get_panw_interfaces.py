@@ -87,12 +87,14 @@ def parse_interfaces(root, hostname):
         ifname = int.find('name').text
         ip = int.find('ip').text or 'N/A'
         zone = int.find('zone').text or 'N/A'
+        vsys = int.find('vsys').text or 'N/A'
 
         interfaces[ifname] = {
             **interfaces.get(ifname, {}),
             'Firewall': hostname,
             'Zone': zone,
-            'IpAddress': ip
+            'IpAddress': ip,
+            'vSys': vsys
         }
 
     return interfaces
@@ -165,6 +167,10 @@ def print_results(args, results):
             },
             'IpAddress': {
                 'width': 17,
+                'na': 'N/A'
+            },
+            'vSys': {
+                'width': 4,
                 'na': 'N/A'
             },
             'VirtualRouter': {
