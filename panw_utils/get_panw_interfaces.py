@@ -87,7 +87,8 @@ def parse_interfaces(root, hostname):
         ifname = int.find('name').text
         ip = int.find('ip').text or 'N/A'
         zone = int.find('zone').text or 'N/A'
-        vsys = int.find('vsys').text or 'N/A'
+        vsys = int.find("vsys").text
+        vsys = f'vsys{int.find("vsys").text}' if vsys != '0' else 'N/A'
 
         interfaces[ifname] = {
             **interfaces.get(ifname, {}),
