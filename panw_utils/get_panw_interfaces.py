@@ -139,47 +139,47 @@ def print_results(args, results):
     else:
         fields = {
             'Firewall': {
-                'width': 29,
+                'width': max([ len('Firewall') ] + [ len(attrs.get('Firewall', '')) for int in results for attrs in int.values() ]),
                 'na': 'N/A'
             },
             'Interface': {
-                'width': 20,
+                'width': max([ len('Interface') ] + [ len(ifname) for i in results for ifname in i.keys() ]),
                 'na': 'N/A'
             },
             'LinkState': {
-                'width': 9,
+                'width': max([ len('LinkState') ] + [ len(attrs.get('LinkState', '')) for int in results for attrs in int.values() ]),
                 'na': 'N/A'
             },
             'Status': {
-                'width': 24,
+                'width': max([ len('Status') ] + [ len(attrs.get('Status', '')) for int in results for attrs in int.values() ]),
                 'na': 'N/A'
             },
             'MacAddress': {
-                'width': 17,
+                'width': max([ len('MacAddress') ] + [ len(attrs.get('MacAddress', '')) for int in results for attrs in int.values() ]),
                 'na': 'N/A'
             },
             'AggGrp': {
-                'width': 6,
+                'width': max([ len('AggGrp') ] + [ len(attrs.get('AggGrp', '')) for int in results for attrs in int.values() ]),
                 'na': 'N/A'
             },
             'Zone': {
-                'width': 17,
+                'width': max([ len('Zone') ] + [ len(attrs.get('Zone', '')) for int in results for attrs in int.values() ]),
                 'na': 'N/A'
             },
             'IpAddress': {
-                'width': 17,
+                'width': max([ len('IpAddress') ] + [ len(attrs.get('IpAddress', '')) for int in results for attrs in int.values() ]),
                 'na': 'N/A'
             },
             'vSys': {
-                'width': 4,
+                'width': max([ len('vSys') ] + [ len(attrs.get('vSys', '')) for int in results for attrs in int.values() ]),
                 'na': 'N/A'
             },
             'VirtualRouter': {
-                'width': 25,
+                'width': max([ len('VirtualRouter') ] + [ len(attrs.get('VirtualRouter', '')) for int in results for attrs in int.values() ]),
                 'na': 'N/A'
             },
             'Comment': {
-                'width': 25,
+                'width': max([ len('Comment') ] + [ len(attrs.get('Comment', '')) for int in results for attrs in int.values() ]),
                 'na': ''
             },
         }
