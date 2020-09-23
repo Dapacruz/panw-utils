@@ -133,53 +133,66 @@ def parse_interface_config(root, interfaces):
     return interfaces
 
 
+def get_field_width(field, interfaces):
+    field_width = [len(field)]
+    if field == 'Interface':
+        for int in interfaces:
+            for ifname in int.keys():
+                field_width.append(len(ifname))
+    else:
+        for int in interfaces:
+            for attrs in int.values():
+                field_width.append(len(attrs.get(field, '')))
+    return max(field_width)
+
+
 def print_results(args, results):
     if args.terse:
         regex = re.compile(r'.*?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*$')
     else:
         fields = {
             'Firewall': {
-                'width': max([ len('Firewall') ] + [ len(attrs.get('Firewall', '')) for int in results for attrs in int.values() ]),
+                'width': get_field_width('Firewall', results),
                 'na': 'N/A'
             },
             'Interface': {
-                'width': max([ len('Interface') ] + [ len(ifname) for i in results for ifname in i.keys() ]),
+                'width': get_field_width('Interface', results),
                 'na': 'N/A'
             },
             'LinkState': {
-                'width': max([ len('LinkState') ] + [ len(attrs.get('LinkState', '')) for int in results for attrs in int.values() ]),
+                'width': get_field_width('LinkState', results),
                 'na': 'N/A'
             },
             'Status': {
-                'width': max([ len('Status') ] + [ len(attrs.get('Status', '')) for int in results for attrs in int.values() ]),
+                'width': get_field_width('Status', results),
                 'na': 'N/A'
             },
             'MacAddress': {
-                'width': max([ len('MacAddress') ] + [ len(attrs.get('MacAddress', '')) for int in results for attrs in int.values() ]),
+                'width': get_field_width('MacAddress', results),
                 'na': 'N/A'
             },
             'AggGrp': {
-                'width': max([ len('AggGrp') ] + [ len(attrs.get('AggGrp', '')) for int in results for attrs in int.values() ]),
+                'width': get_field_width('AggGrp', results),
                 'na': 'N/A'
             },
             'Zone': {
-                'width': max([ len('Zone') ] + [ len(attrs.get('Zone', '')) for int in results for attrs in int.values() ]),
+                'width': get_field_width('Zone', results),
                 'na': 'N/A'
             },
             'IpAddress': {
-                'width': max([ len('IpAddress') ] + [ len(attrs.get('IpAddress', '')) for int in results for attrs in int.values() ]),
+                'width': get_field_width('IpAddress', results),
                 'na': 'N/A'
             },
             'vSys': {
-                'width': max([ len('vSys') ] + [ len(attrs.get('vSys', '')) for int in results for attrs in int.values() ]),
+                'width': get_field_width('vSys', results),
                 'na': 'N/A'
             },
             'VirtualRouter': {
-                'width': max([ len('VirtualRouter') ] + [ len(attrs.get('VirtualRouter', '')) for int in results for attrs in int.values() ]),
+                'width': get_field_width('VirtualRouter', results),
                 'na': 'N/A'
             },
             'Comment': {
-                'width': max([ len('Comment') ] + [ len(attrs.get('Comment', '')) for int in results for attrs in int.values() ]),
+                'width': get_field_width('Comment', results),
                 'na': ''
             },
         }
