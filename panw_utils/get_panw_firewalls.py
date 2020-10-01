@@ -57,7 +57,8 @@ def query_api(args):
         with urllib.request.urlopen(url, context=ctx) as response:
             xml = response.read().decode('utf-8')
     except OSError as err:
-        raise SystemExit(f'{args.panorama}: Unable to connect to host ({err})')
+        sys.stderr.write(f'{args.panorama}: Unable to connect to host ({err})\n')
+        sys.exit(1)
 
     return xml
 
@@ -114,7 +115,8 @@ def output(args, results):
 
     for serial, attrib in results.items():
         if args.terse:
-            print(attrib['hostname'])
+            if attrib['hostname'] != 'n/a':
+                print(attrib['hostname'])
         else:
             print(f'{attrib["hostname"] :30}\t{attrib["mgmt_ip"] :15}\t{serial :12}\t{attrib["model"] :8}\t{attrib["connected"] :9}\t{attrib["uptime"] :20}\t{attrib["sw_version"] :9}')
 
@@ -188,7 +190,8 @@ def main():
     try:
         root = ET.fromstring(xml)
     except TypeError as err:
-        raise SystemExit(f'Unable to parse XML! ({err})')
+        sys.stderr.write(f'Unable to parse XML! ({err})\n')
+        sys.exit(1)
 
     firewalls = parse_xml(args, root)
 

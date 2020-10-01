@@ -162,7 +162,7 @@ def connect_ssh(args, settings, key_path, host):
         set_config = net_connect.send_command('set cli config-output-format set')
         set_config = net_connect.send_config_set(['show'])
     except Exception as e:
-        sys.stderr.write(f'Connection error ({host}): {e}')
+        sys.stderr.write(f'Connection error ({host}): {e}\n')
         sys.exit(1)
     finally:
         net_connect.disconnect()
@@ -239,7 +239,7 @@ def main():
             t = threading.Thread(target=query_api, args=(args, host))
             worker_threads.append(t)
             t.start()
-        
+
         for t in worker_threads:
             t.join()
     elif args.format == 'set':
