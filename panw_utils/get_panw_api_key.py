@@ -59,7 +59,8 @@ def query_api(args, host):
         with urllib.request.urlopen(url, context=ctx) as response:
             xml = response.read().decode('utf-8')
     except OSError as err:
-        raise SystemExit(f'{host}: Unable to connect to host ({err})')
+        sys.stderr.write(f'{host}: Unable to connect to host ({err})\n')
+        sys.exit(1)
 
     return xml
 
@@ -72,8 +73,9 @@ def worker(args, host):
     try:
         api_key = root.find(".//key").text
     except AttributeError as err:
-        raise SystemExit(f'Unable to parse API key! ({err})')
-    
+        sys.stderr.write(f'Unable to parse API key! ({err})\n')
+        sys.exit(1)
+
     if args.verbose:
         print_queue.put(f'{host + ": " :30}{api_key}')
     else:
@@ -167,12 +169,12 @@ def main():
         t = threading.Thread(target=worker, args=(args, host))
         worker_threads.append(t)
         t.start()
-    
+
     for t in worker_threads:
         t.join()
 
     print_queue.join()
-    
+
     sys.exit(0)
 
 

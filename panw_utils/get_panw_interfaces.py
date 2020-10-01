@@ -62,6 +62,7 @@ def query_api(host, params):
             xml = response.read().decode('utf-8')
     except OSError as err:
         sys.stderr.write(f'{host}: Unable to connect to host ({err})\n')
+        sys.exit(1)
         return
 
     return xml
@@ -261,7 +262,8 @@ def worker(args, host):
     try:
         interfaces = parse_interfaces(ET.fromstring(xml), host)
     except TypeError as err:
-        raise SystemExit(f'Unable to parse XML! ({err})')
+        sys.stderr.write(f'Unable to parse XML! ({err})\n')
+        sys.exit(1)
 
     url_params = {
         'type': 'config',
@@ -276,7 +278,8 @@ def worker(args, host):
     try:
         interfaces = parse_interface_config(root, interfaces)
     except TypeError as err:
-        raise SystemExit(f'Unable to parse XML! ({err})')
+        sys.stderr.write(f'Unable to parse XML! ({err})\n')
+        sys.exit(1)
 
     results_queue.put(interfaces)
 

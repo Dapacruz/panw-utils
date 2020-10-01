@@ -111,7 +111,7 @@ def connect_ssh(args, settings, key_path, host):
             output.append(f'=== {cmd} ===')
             output.append('\n'.join(net_connect.send_command(cmd).split('\n')[1:]))
     except Exception as e:
-        sys.stderr.write(f'Connection error: {e}')
+        sys.stderr.write(f'Connection error: {e}\n')
         sys.exit(1)
     finally:
         net_connect.disconnect()
