@@ -94,7 +94,7 @@ def parse_xml(args, root):
             sw_version = firewall.find('sw-version').text
         except AttributeError:
             sw_version = 'n/a'
-        
+
         results.update({
             serial: {
                 'hostname': hostname,
@@ -105,14 +105,14 @@ def parse_xml(args, root):
                 'sw_version': sw_version,
             }
         })
-    
+
     return results
 
 def output(args, results):
     # Print header
     if not args.terse:
-        print(f'{"Host" :30}\t{"MgmtIP" :15}\t{"Serial" :12}\t{"Model" :8}\t{"Connected" :9}\t{"Uptime" :20}\t{"SwVersion" :9}', file=sys.stderr)
-        print(f'{"=" * 30 :30}\t{"=" * 15 :15}\t{"=" * 12 :12}\t{"=" * 8 :8}\t{"=" * 9 :9}\t{"=" * 20 :20}\t{"=" * 9 :9}', file=sys.stderr)
+        print(f'{"Host" :30}\t{"MgmtIP" :15}\t{"Serial" :12}\t{"Model" :8}\t{"Connected" :9}\t{"Uptime" :20}\t{"SwVersion" :9}')
+        print(f'{"=" * 30 :30}\t{"=" * 15 :15}\t{"=" * 12 :12}\t{"=" * 8 :8}\t{"=" * 9 :9}\t{"=" * 20 :20}\t{"=" * 9 :9}')
 
     for serial, attrib in results.items():
         if args.terse:

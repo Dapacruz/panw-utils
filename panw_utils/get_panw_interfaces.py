@@ -210,9 +210,8 @@ def print_results(args, results):
             header += f'{field :<{attrs["width"]}}'
             hr += f'{("=" * attrs["width"]) :<{attrs["width"]}}'
 
-        print('\n')
-        print(header, file=sys.stderr)
-        print(hr, file=sys.stderr)
+        print(header)
+        print(hr)
 
     # Print interfaces info
     for interfaces in results:
