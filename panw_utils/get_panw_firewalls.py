@@ -65,9 +65,7 @@ def parse_xml(args, root):
     results = {}
     for firewall in root.findall('./result/devices/entry'):
         connected = firewall.find('connected').text
-        if args.terse and connected != 'yes':
-            continue
-        elif (args.state == 'disconnected' or args.state == 'not-connected') and connected == 'yes':
+        if (args.state == 'disconnected' or args.state == 'not-connected') and connected == 'yes':
             continue
 
         try:
