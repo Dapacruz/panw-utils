@@ -50,7 +50,8 @@ def parse_args():
     parser.add_argument('-f', '--format', choices=['xml', 'set'], default='xml', help='Output format')
 
     group1 = parser.add_argument_group('Set configuration format')
-    group1.add_argument('-g', '--global-delay-factor', metavar='', type=int, default=1, help='Increase wait time for prompt (default is 1)')
+    group1.add_argument('-g', '--global-delay-factor', metavar='', type=int,
+                        default=1, help='Increase wait time for prompt (default is 1)')
     group1.add_argument('-u', '--user', metavar='', type=str, help='User')
     group1.add_argument('-p', '--password', metavar='', type=str, help='Password')
     group1.add_argument('-K', '--key-based-auth', action='store_true', help='Use key based authentication')
@@ -102,7 +103,8 @@ def import_saved_settings(settings_path):
 
 def update_saved_settings(settings, settings_path):
     print('\nUpdating saved settings ...\n')
-    settings['default_firewall'] = input(f'New Default Firewall [{settings["default_firewall"]}]: ') or settings['default_firewall']
+    settings['default_firewall'] = input(
+        f'New Default Firewall [{settings["default_firewall"]}]: ') or settings['default_firewall']
     settings['default_user'] = input(f'New Default User [{settings["default_user"]}]: ') or settings['default_user']
     settings['key'] = input(f'New API Key [{settings["key"]}]: ') or settings['key']
     with open(settings_path, 'w') as f:
@@ -119,17 +121,17 @@ def query_api(args, host):
     # Get connected firewalls
     if args.xpath:
         params = urllib.parse.urlencode({
-        'xpath': args.xpath,
-        'type': 'config',
-        'action': 'show',
-        'key': args.key,
-    })
+            'xpath': args.xpath,
+            'type': 'config',
+            'action': 'show',
+            'key': args.key,
+        })
     else:
         params = urllib.parse.urlencode({
-        'type': 'op',
-        'cmd': f'<show><config><{args.t}></{args.t}></config></show>',
-        'key': args.key,
-    })
+            'type': 'op',
+            'cmd': f'<show><config><{args.t}></{args.t}></config></show>',
+            'key': args.key,
+        })
     url = f'https://{host}/api/?{params}'
     try:
         with urllib.request.urlopen(url, context=ctx) as response:
@@ -140,6 +142,7 @@ def query_api(args, host):
         return
 
     print_config(xml_config, host)
+
 
 def connect_ssh(args, settings, key_path, host):
     panos = {
@@ -161,11 +164,10 @@ def connect_ssh(args, settings, key_path, host):
         net_connect = ConnectHandler(**panos)
         set_config = net_connect.send_command('set cli config-output-format set')
         set_config = net_connect.send_config_set(['show'])
+        net_connect.disconnect()
     except Exception as e:
         sys.stderr.write(f'Connection error ({host}): {e}\n')
         sys.exit(1)
-    finally:
-        net_connect.disconnect()
 
     # Replace non printable Unicode characters to fix Windows stdout issue
     set_config = str(set_config.encode('utf-8'))
