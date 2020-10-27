@@ -9,5 +9,5 @@ Sphinx==1.8.1
 twine==1.12.1
 netmiko==3.3.0
 paramiko==2.7.2
-cryptography==3.1
+cryptography==3.2
 lxml==4.5.2
