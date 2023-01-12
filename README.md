@@ -1,4 +1,7 @@
 # panw-utils
+![License](https://img.shields.io/github/license/dapacruz/panw-utils)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/panw-utils)
+
 *Palo Alto Networks Utility Scripts*
 </br>
 </br>
