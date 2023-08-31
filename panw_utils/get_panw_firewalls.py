@@ -29,9 +29,11 @@ import os.path
 import signal
 import ssl
 import sys
-import urllib.request
 import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
+from urllib import parse
+from urllib.request import urlopen
+
 
 def sigint_handler(signum, frame):
     sys.exit(1)
@@ -47,14 +49,14 @@ def query_api(args):
         cmd = '<show><devices><connected></connected></devices></show>'
     else:
         cmd = '<show><devices><all></all></devices></show>'
-    params = urllib.parse.urlencode({
+    params = parse.urlencode({
         'type': 'op',
         'cmd': cmd,
         'key': args.key,
     })
     url = f'https://{args.panorama}/api/?{params}'
     try:
-        with urllib.request.urlopen(url, context=ctx) as response:
+        with urlopen(url, context=ctx) as response:
             xml = response.read().decode('utf-8')
     except OSError as err:
         sys.stderr.write(f'{args.panorama}: Unable to connect to host ({err})\n')
